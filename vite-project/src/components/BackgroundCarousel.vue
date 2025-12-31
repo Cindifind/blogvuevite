@@ -31,7 +31,7 @@ let nextLayer = null
 const getImageUrl = () => {
   // 随机选择一张图片
   const randomIndex = Math.floor(Math.random() * imageFiles.length);
-  return `/image/${imageFiles[randomIndex]}`;
+  return `public/image/${imageFiles[randomIndex]}`;
 }
 
 // 预加载单张图片
