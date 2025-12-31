@@ -222,17 +222,6 @@ const handleClose = () => {
 
 <style scoped>
 /* 从 index_style.css 提取的导航栏相关样式 */
-@font-face {
-  font-family: 'BarbaraHand';
-  src: url('/font/barbarahand-webfont.eot');
-  src: url('/font/barbarahand-webfont.eot?#iefix') format('embedded-opentype'),
-  url('/font/barbarahand-webfont.woff2') format('woff2'),
-  url('/font/barbarahand-webfont.woff') format('woff'),
-  url('/font/barbarahand-webfont.ttf') format('truetype'),
-  url('/font/barbarahand-webfont.svg#barbarahandregular') format('svg');
-  font-weight: normal;
-  font-style: normal;
-}
 
 .logo {
   font-size: 50px;

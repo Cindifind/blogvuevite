@@ -49,6 +49,12 @@ const routes = [
       name: 'Voice',
       component: () => import('../views/voice.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+        path: '/music',
+        name: 'Music',
+        component: () => import('../views/music.vue'),
+        meta: { requiresAuth: true }
     }
     // 图片管理页面路由
     // // 留言页面路由
