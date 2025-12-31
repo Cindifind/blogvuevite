@@ -268,7 +268,7 @@ const loadReplies = async (comment) => {
 
   try {
     // 调用 articleReply 接口获取回复
-    const response = await fetchWithToken(`http://luren.online:2345/proxy/articleReply?parentId=${commentId}`)
+    const response = await fetchWithToken(`https://luren.online:2345/proxy/articleReply?parentId=${commentId}`)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -297,7 +297,7 @@ const loadComments = async () => {
   error.value = ''
 
   try {
-    const response = await fetchWithToken(`http://luren.online:2345/proxy/article?articleId=${props.articleId}`)
+    const response = await fetchWithToken(`https://luren.online:2345/proxy/article?articleId=${props.articleId}`)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -339,7 +339,7 @@ const submitComment = async () => {
       timestamp: Date.now()
     }
 
-    const response = await fetchWithToken('http://luren.online:2345/proxy/addComment', {
+    const response = await fetchWithToken('https://luren.online:2345/proxy/addComment', {
       method: 'POST',
       body: JSON.stringify(commentData)
     })
@@ -382,7 +382,7 @@ const submitReply = async (parentComment) => {
 
     // 调用 user/addReply 接口
     const response = await fetchWithToken(
-      'http://luren.online:2345/proxy/addReply',
+      'https://luren.online:2345/proxy/addReply',
       {
         method: 'POST',
         headers: {
@@ -441,7 +441,7 @@ const deleteComment = async (timestamp) => {
       throw new Error('请先登录')
     }
 
-    const response = await fetchWithToken(`http://luren.online:2345/proxy/deleteComment?timestamp=${timestamp}`, {
+    const response = await fetchWithToken(`https://luren.online:2345/proxy/deleteComment?timestamp=${timestamp}`, {
       method: 'GET'
     })
 

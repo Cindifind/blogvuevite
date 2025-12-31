@@ -88,7 +88,7 @@ const isAdmin = computed(() => {
 })
 
 // 响应式数据
-const defaultAvatar = ref('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%23cccccc"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="%23666666">?</text></svg>')
+const defaultAvatar = ref('data:image/svg+xml;utf8,<svg xmlns="https://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%23cccccc"/><text x="12" y="16" font-size="12" text-anchor="middle" fill="%23666666">?</text></svg>')
 
 // 菜单状态
 const isMenuOpen = ref(false)

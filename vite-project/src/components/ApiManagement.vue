@@ -254,7 +254,7 @@ const apiRules = {
 }
 
 // 基础配置与通用请求
-const API_BASE_URL = 'http://luren.online:2345'
+const API_BASE_URL = 'https://luren.online:2345'
 const getToken = () => localStorage.getItem('userToken')
 
 const request = async (url, options = {}, requireAuth = false) => {

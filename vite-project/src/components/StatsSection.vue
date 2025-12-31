@@ -102,7 +102,7 @@ const updateRunningTime = () => {
 // 方法：获取访问量
 const fetchPageViews = async () => {
   try {
-    const response = await fetch('http://luren.online:2345/proxy/getPageViews')
+    const response = await fetch('https://luren.online:2345/proxy/getPageViews')
 
     if (!response.ok) {
       throw new Error(`HTTP错误: ${response.status}`)
@@ -124,7 +124,7 @@ const fetchPageViews = async () => {
 // 方法：获取“博主正在玩”
 const fetchPlayingSoft = async () => {
   try {
-    const response = await fetch('http://luren.online:8080/stalkLook?name=%E7%A9%86%E6%B8%85%E5%85%AE')
+    const response = await fetch('https://luren.online:8080/stalkLook?name=%E7%A9%86%E6%B8%85%E5%85%AE')
     if (!response.ok) {
       throw new Error(`HTTP错误: ${response.status}`)
     }

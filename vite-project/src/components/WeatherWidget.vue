@@ -50,7 +50,7 @@ const fetchWeatherData = async () => {
   `
 
   try {
-    const response = await fetch('http://v4.luren.online:2345/proxy/getWeather')
+    const response = await fetch('https://v4.luren.online:2345/proxy/getWeather')
     if (!response.ok) {
       throw new Error(`HTTP错误: ${response.status}`)
     }

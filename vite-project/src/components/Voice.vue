@@ -233,7 +233,7 @@ const generateVoice = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await fetch('http://luren.online:2345/proxy/elysiaVoice', {
+    const response = await fetch('https://luren.online:2345/proxy/elysiaVoice', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

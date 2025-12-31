@@ -178,7 +178,7 @@ async function sendRegisterCode() {
 
   try {
     // 发送验证码请求
-    const response = await fetch('http://luren.online:2345/proxy/sendCode', {
+    const response = await fetch('https://luren.online:2345/proxy/sendCode', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -219,7 +219,7 @@ async function sendVerificationCode() {
 
   try {
     // 发送请求到后端发送验证码
-    const response = await fetch('http://luren.online:2345/proxy/forgetPassword', {
+    const response = await fetch('https://luren.online:2345/proxy/forgetPassword', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -268,7 +268,7 @@ async function changePassword() {
 
   try {
     // 发送请求到后端修改密码
-    const response = await fetch('http://luren.online:2345/proxy/changePassword', {
+    const response = await fetch('https://luren.online:2345/proxy/changePassword', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -348,7 +348,7 @@ async function handleRegister() {
 
   try {
     // 发送注册请求
-    const response = await fetch('http://luren.online:2345/proxy/register', {
+    const response = await fetch('https://luren.online:2345/proxy/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

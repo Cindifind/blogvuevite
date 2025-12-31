@@ -287,14 +287,14 @@ const toolRules = {
     { required: true, message: '请输入工具URL', trigger: 'blur' },
     { 
       pattern: /^https?:\/\/.+/, 
-      message: '请输入有效的URL地址（以http://或https://开头）', 
+      message: '请输入有效的URL地址（以http://或https://开头）',
       trigger: 'blur' 
     }
   ]
 }
 
 // API配置
-const API_BASE_URL = 'http://luren.online:2345'
+const API_BASE_URL = 'https://luren.online:2345'
 
 // 获取存储的token
 const getToken = () => {
