@@ -370,7 +370,7 @@ const formatTime = (seconds) => {
   const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
-const API_BASE_URL = 'http://luren.online:2345'
+const API_BASE_URL = 'https://luren.online:2345'
 
 // 动态获取API请求头
 const getApiHeaders = () => {
