@@ -15,16 +15,23 @@ import { onMounted, ref } from 'vue'
 // 轮播控制
 const currentImageIndex = ref(0) // 当前显示的图片索引
 const images = ref([]) // 预加载好的图片 URL 数组
-const totalImages = 3 // 一共预加载 3 张图，t=0, t=1, t=2
+
+// 生成图片文件列表 (1-979.webp)
+const totalImages = 979; // 总共有979张图片
+const imageFiles = [];
+for (let i = 1; i <= totalImages; i++) {
+  imageFiles.push(`${i}.webp`);
+}
 
 // DOM 元素引用
 let currentLayer = null
 let nextLayer = null
 
-// 生成固定的图片 URL，不要用 Date.now()，避免频繁请求
-const getImageUrl = (index) => {
-  // 只是示例，请根据实际情况使用固定图片或后端真实接口
-  return `https://eopfapi.2b2x.cn/pic?img=ua&t=${index}` // t=0, t=1, t=2
+// 生成图片 URL，从本地 image 目录随机获取
+const getImageUrl = () => {
+  // 随机选择一张图片
+  const randomIndex = Math.floor(Math.random() * imageFiles.length);
+  return `/image/${imageFiles[randomIndex]}`;
 }
 
 // 预加载单张图片
@@ -43,31 +50,16 @@ const preloadImage = (url) => {
   })
 }
 
-// 初始化：预加载前 N 张图
+// 初始化：不需要预加载图片，因为每次都是随机获取
 const initImages = async () => {
-  console.log('🔄 开始预加载轮播图片...')
-  const loadedImages = []
-
-  for (let i = 0; i < totalImages; i++) {
-    const url = getImageUrl(i)
-    try {
-      const imgUrl = await preloadImage(url)
-      loadedImages.push(imgUrl)
-    } catch (err) {
-      console.warn(`第 ${i + 1} 张图加载失败，跳过`, err)
-      // 如果有默认占位图，可以在这里 push 占位图 URL
-    }
-  }
-
-  images.value = loadedImages
-  console.log('📸 预加载完成，共加载图片数量:', images.value.length)
+  console.log('🔄 背景轮播初始化完成')
+  // 不再预加载图片，直接初始化为空数组
+  images.value = []
+  console.log('📸 背景轮播已准备就绪')
 }
 
 // 显示某张图片（带淡入效果）
-const showImage = (index) => {
-  if (images.value.length === 0) return
-  if (index >= images.value.length) return
-
+const showImage = () => {
   const currentLayerEl = document.getElementById('current-layer')
   const nextLayerEl = document.getElementById('next-layer')
 
@@ -76,7 +68,8 @@ const showImage = (index) => {
     return
   }
 
-  const imageUrl = images.value[index]
+  // 随机选择一张图片显示
+  const imageUrl = getImageUrl() // 随机获取图片URL
 
   // 当前显示层是 currentLayer，先设置要显示的图片
   currentLayerEl.style.backgroundImage = `url('${imageUrl}')`
@@ -87,32 +80,18 @@ const showImage = (index) => {
   nextLayerEl.style.opacity = '0'
   nextLayerEl.style.backgroundImage = ''
 
-  console.log(`🖼️ 正在显示第 ${index + 1} 张图`)
+  console.log(`🖼️ 正在显示随机图片`)
 }
 
 // 切换到下一张图（淡出当前，淡入下一张）
 const switchToNextImage = async () => {
-  if (images.value.length < 2) {
-    console.warn('⚠️ 图片数量不足，无法轮播')
-    return
-  }
-
-  const nextIndex = (currentImageIndex.value + 1) % images.value.length
-
-  // 预加载下一张图片确保它可用
-  try {
-    await preloadImage(getImageUrl(nextIndex))
-  } catch (error) {
-    console.error('无法加载下一张图片:', error)
-    return
-  }
+  // 随机选择下一张图片
+  const nextImageUrl = getImageUrl() // 随机获取图片URL
 
   const currentLayerEl = document.getElementById('current-layer')
   const nextLayerEl = document.getElementById('next-layer')
 
   if (!currentLayerEl || !nextLayerEl) return
-
-  const nextImageUrl = getImageUrl(nextIndex)
 
   // 1. 先设置下一张图到 nextLayer，并开始淡入
   nextLayerEl.style.backgroundImage = `url('${nextImageUrl}')`
@@ -131,7 +110,8 @@ const switchToNextImage = async () => {
     currentLayerEl.style.backgroundImage = `url('${nextImageUrl}')`
     currentLayerEl.style.opacity = '1'
     nextLayerEl.style.opacity = '0'
-    currentImageIndex.value = nextIndex
+    // 更新当前图片索引（虽然索引不再代表具体图片，但可用来追踪切换次数）
+    currentImageIndex.value = (currentImageIndex.value + 1) % totalImages
   }, 2000) // 与 CSS transition 时间保持一致
 }
 
@@ -140,15 +120,10 @@ let carouselTimer = null
 
 // 启动轮播：每张图显示 15 秒后切换
 const startCarousel = () => {
-  if (images.value.length === 0) {
-    console.warn('⚠️ 没有可轮播的图片，启动失败')
-    return
-  }
+  // 先显示一张随机图片
+  showImage()
 
-  // 先显示第 0 张图
-  showImage(0)
-
-  // 每隔 15 秒，切换到下一张图
+  // 每隔 15 秒，切换到下一张随机图
   const DISPLAY_TIME_MS = 15000 // 每张图显示 15 秒
   carouselTimer = setInterval(() => {
     switchToNextImage()
