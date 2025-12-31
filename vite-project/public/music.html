@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐API文档 - 现代化接口文档</title>
+    
+    <!-- Element Plus CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- Font Awesome v5 (兼容 fas 类名) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Prism.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            /* 不变形但覆盖全页：使用 cover，并固定背景避免滚动时露底 */
+            background: url('https://eopfapi.2b2x.cn/pic?img=ua') center/cover no-repeat, linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed, scroll;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 32px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* 授权弹窗中的token显示样式 */
+        .token-display {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+            word-break: break-all;
+            user-select: text;
+            color: #2c3e50;
+        }
+
+        /* 左侧导航栏样式 */
+        .sidebar-nav {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 260px;
+            height: calc(100vh - 100px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-header {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 20px 20px 0 0;
+        }
+
+        .nav-header i {
+            font-size: 20px;
+            color: #667eea;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 15px 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(102, 126, 234, 0.05));
+        }
+
+        .nav-item {
+            margin: 2px 8px;
+            border-radius: 0 25px 25px 0;
+            overflow: hidden;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #5a6c7d;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+            border-radius: 0 25px 25px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-left-color: #667eea;
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-link:active {
+            transform: translateX(4px) scale(0.98);
+        }
+
+        .nav-item.active .nav-link {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 500;
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-link i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover i {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .api-count-badge {
+            background: #667eea;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .nav-link:hover .api-count-badge {
+            transform: scale(1.1);
+            background: #5a67d8;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-item.active .api-count-badge {
+            background: #5a67d8;
+        }
+
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            margin-left: 300px;
+            padding: 30px 20px;
+            width: calc(100% - 300px);
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .api-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .api-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .api-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .api-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .api-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-count {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .api-url {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            color: #495057;
+            margin-bottom: 16px;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-tabs {
+            margin-top: 16px;
+        }
+
+        .code-content {
+            background: #2d3748;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .code-header {
+            background: #1a202c;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .code-language {
+            color: #a0aec0;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #4a5568;
+            color: #a0aec0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #4a5568;
+            color: white;
+        }
+
+        .code-block {
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-icon {
+            font-size: 48px;
+            color: #e74c3c;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            color: #7f8c8d;
+            margin-bottom: 24px;
+        }
+
+        .retry-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .stat-icon.api-count { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .stat-icon.total-calls { background: linear-gradient(45deg, #f093fb, #f5576c); }
+
+        .stat-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar-nav.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .api-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-content {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-music"></i>
+                    <h1>音乐API文档</h1>
+                </div>
+                <div class="header-actions">
+                    <el-button size="small" type="primary" @click="openTokenDialog">
+                        <i class="fas fa-key" style="margin-right:6px"></i>
+                        查看授权
+                    </el-button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 授权查看弹窗 -->
+        <el-dialog v-model="showTokenDialog" title="用户授权" width="600px">
+            <div v-if="authToken" class="token-display">
+                Authorization: Bearer {{ authToken }}
+            </div>
+            <div v-else style="color:#7f8c8d;">
+                未找到授权，请先登录。
+            </div>
+            <template #footer>
+                <el-button @click="copyToken" :disabled="!authToken">复制</el-button>
+                <el-button type="primary" @click="showTokenDialog=false">关闭</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- 左侧API导航栏 -->
+        <nav class="sidebar-nav">
+            <div class="nav-header">
+                <i class="fas fa-code"></i>
+                <span>API导航</span>
+            </div>
+            <ul class="nav-menu">
+                <li v-for="(api, index) in apiList" :key="index" class="nav-item" :class="{ active: selectedApiIndex === index }">
+                    <a href="#" class="nav-link" @click.prevent="scrollToApi(index)">
+                        <i class="fas fa-link"></i>
+                        <span>{{ getLastWord(api.url) }}</span>
+                        <span class="api-count-badge">{{ api.count }}</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 主要内容 -->
+        <main class="main-content">
+            <!-- 加载状态 -->
+            <div v-if="loading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <div style="font-size: 16px; font-weight: 500;">正在加载API数据...</div>
+                <div style="font-size: 14px; opacity: 0.8; margin-top: 8px;">请稍候片刻</div>
+            </div>
+
+            <!-- 错误状态 -->
+            <div v-else-if="error" class="error-container">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="error-title">加载失败</div>
+                <div class="error-message">{{ error }}</div>
+                <button class="retry-btn" @click="loadApiData">
+                    <i class="fas fa-redo"></i>
+                    重新加载
+                </button>
+            </div>
+
+            <!-- API数据展示 -->
+            <div v-else>
+                <!-- 统计信息 -->
+                <div class="stats-bar">
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <div class="stat-icon api-count">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="stat-text">
+                                <div class="stat-number">{{ apiList.length }}</div>
+                                <div class="stat-label">API接口</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon total-calls">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-text">
+                                <div class="stat-number">{{ totalCalls }}</div>
+                                <div class="stat-label">总调用次数</div>
+                            </div>
+                        </div>
+                        <div style="color: #7f8c8d; font-size: 14px;">
+                            <i class="fas fa-clock"></i>
+                            最后更新: {{ lastUpdateTime }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API卡片网格 -->
+                <div class="api-grid">
+                    <div v-for="(api, index) in apiList" :key="index" :id="`api-card-${index}`" class="api-card">
+                        <div class="api-header">
+                            <div class="api-title">
+                                <i class="fas fa-code"></i>
+                                {{ getApiName(api.url) }}
+                            </div>
+                            <div class="api-count">{{ api.count }} 次调用</div>
+                        </div>
+
+                        <div class="api-url">
+                            <i class="fas fa-link"></i>
+                            {{ api.url }}
+                        </div>
+
+                        <div v-if="api.description" style="color: #7f8c8d; margin-bottom: 16px; font-size: 14px;">
+                            {{ api.description }}
+                        </div>
+
+                        <!-- 代码示例标签页 -->
+                        <div class="code-tabs">
+                            <el-tabs v-model="activeTab[index]" type="border-card">
+                                <el-tab-pane label="Java" name="java">
+                                    <div class="code-content">
+                                        <div class="code-header">
+                                            <span class="code-language">Java</span>
+                                            <button class="copy-btn" @click="copyCode(api.java, 'Java代码已复制')">
+                                                <i class="fas fa-copy"></i>
+                                                复制
+                                            </button>
+                                        </div>
+                                        <div class="code-block">
+                                            <pre><code class="language-java">{{ api.java }}</code></pre>
+                                        </div>
+                                    </div>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="Python" name="python">
+                                    <div class="code-content">
+                                        <div class="code-header">
+                                            <span class="code-language">Python</span>
+                                            <button class="copy-btn" @click="copyCode(api.python, 'Python代码已复制')">
+                                                <i class="fas fa-copy"></i>
+                                                复制
+                                            </button>
+                                        </div>
+                                        <div class="code-block">
+                                            <pre><code class="language-python">{{ api.python }}</code></pre>
+                                        </div>
+                                    </div>
+                                </el-tab-pane>
+                                
+                                <el-tab-pane label="JavaScript" name="javascript">
+                                    <div class="code-content">
+                                        <div class="code-header">
+                                            <span class="code-language">JavaScript</span>
+                                            <button class="copy-btn" @click="copyCode(api.javascript, 'JavaScript代码已复制')">
+                                                <i class="fas fa-copy"></i>
+                                                复制
+                                            </button>
+                                        </div>
+                                        <div class="code-block">
+                                            <pre><code class="language-javascript">{{ api.javascript }}</code></pre>
+                                        </div>
+                                    </div>
+                                </el-tab-pane>
+                            </el-tabs>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Element Plus -->
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <script>
+        const { createApp } = Vue;
+        const { ElMessage, ElTabs, ElTabPane } = ElementPlus;
+
+        createApp({
+            data() {
+                return {
+                    loading: true,
+                    error: null,
+                    apiList: [],
+                    activeTab: {},
+                    lastUpdateTime: '',
+                    selectedApiIndex: 0,
+                    API_BASE_URL: 'http://luren.online/music.html',
+                    BACKEND_API_BASE: 'http://luren.online:2345',
+                    showTokenDialog: false,
+                    authToken: ''
+                }
+            },
+            computed: {
+                totalCalls() {
+                    return this.apiList.reduce((total, api) => total + (api.count || 0), 0);
+                }
+            },
+            mounted() {
+                this.loadApiData();
+            },
+            methods: {
+                async loadApiData() {
+                    this.loading = true;
+                    this.error = null;
+                    
+                    try {
+                        // 第一步：获取API名称列表
+                        const apiNamesResponse = await fetch(`${this.BACKEND_API_BASE}/proxy/apiInfo?url=${encodeURIComponent(this.API_BASE_URL)}`);
+                        
+                        if (!apiNamesResponse.ok) {
+                            throw new Error(`HTTP ${apiNamesResponse.status}: ${apiNamesResponse.statusText}`);
+                        }
+                        
+                        const apiNamesResult = await apiNamesResponse.json();
+                        
+                        if (apiNamesResult.status !== '200' || !apiNamesResult.data) {
+                            throw new Error(apiNamesResult.message || '获取API名称列表失败');
+                        }
+                        
+                        // 第二步：使用API名称列表获取详细信息
+                        const apiListResponse = await fetch(`${this.BACKEND_API_BASE}/proxy/apiList`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(apiNamesResult.data)
+                        });
+                        
+                        if (!apiListResponse.ok) {
+                            throw new Error(`HTTP ${apiListResponse.status}: ${apiListResponse.statusText}`);
+                        }
+                        
+                        const apiListResult = await apiListResponse.json();
+                        
+                        if (apiListResult.status === '200' && apiListResult.data) {
+                            this.apiList = apiListResult.data;
+                            this.initializeTabs();
+                            this.lastUpdateTime = new Date().toLocaleString('zh-CN');
+                            
+                            // 延迟执行代码高亮
+                            this.$nextTick(() => {
+                                setTimeout(() => {
+                                    if (window.Prism) {
+                                        Prism.highlightAll();
+                                    }
+                                }, 100);
+                            });
+                        } else {
+                            throw new Error(apiListResult.message || '获取API详细信息失败');
+                        }
+                    } catch (error) {
+                        console.error('加载API数据失败:', error);
+                        this.error = error.message;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                initializeTabs() {
+                    const tabs = {};
+                    this.apiList.forEach((api, index) => {
+                        tabs[index] = 'java'; // 默认显示Java标签
+                    });
+                    this.activeTab = tabs;
+                },
+                
+                getApiName(url) {
+                    // 从URL中提取API名称
+                    const parts = url.split('/');
+                    const name = parts[parts.length - 1] || 'API';
+                    return name.charAt(0).toUpperCase() + name.slice(1);
+                },
+                
+                async copyCode(code, message) {
+                    try {
+                        await navigator.clipboard.writeText(code);
+                        ElMessage.success(message);
+                    } catch (error) {
+                        console.error('复制失败:', error);
+                        ElMessage.error('复制失败，请手动复制');
+                    }
+                },
+                
+                // 已移除：loadUserProvidedData() 示例数据方法（按需可在后续以真实接口数据替代）
+                
+                scrollToApi(index) {
+                    this.selectedApiIndex = index;
+                    const element = document.getElementById(`api-card-${index}`);
+                    if (element) {
+                        element.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start',
+                            inline: 'nearest'
+                        });
+                    }
+                },
+                
+                getLastWord(url) {
+                    if (!url) return '';
+                    // 移除可能的查询参数和片段
+                    const cleanUrl = url.split('?')[0].split('#')[0];
+                    // 按斜杠分割并获取最后一个非空部分
+                    const parts = cleanUrl.split('/').filter(part => part.length > 0);
+                    return parts.length > 0 ? parts[parts.length - 1] : url;
+                },
+
+                openTokenDialog() {
+                    try {
+                        const token = localStorage.getItem('userToken') || '';
+                        this.authToken = token;
+                        this.showTokenDialog = true;
+                    } catch (e) {
+                        this.authToken = '';
+                        this.showTokenDialog = true;
+                    }
+                },
+
+                async copyToken() {
+                    if (!this.authToken) return;
+                    const text = `Authorization: Bearer ${this.authToken}`;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        ElMessage.success('已复制到剪贴板');
+                    } catch (error) {
+                        console.error('复制失败:', error);
+                        ElMessage.error('复制失败，请手动复制');
+                    }
+                }
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

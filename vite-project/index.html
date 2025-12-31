@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>穆清兮的博客</title>
+
+    <!-- 基础 Meta 信息 -->
+    <meta name="description" content="穆清兮的个人博客">
+    <meta name="keywords" content="博客,穆清兮,音乐,动漫,技术,编程,生活感悟者">
+    <meta name="author" content="穆清兮">
+
+    <!-- 网站图标 (如果有图标文件的话) -->
+    <link rel="shortcut icon" href="logo.jpg" type="image/x-icon">
+
+    <!-- SEO 优化 -->
+    <link rel="alternate" type="application/rss+xml" title="穆清兮的博客 - RSS订阅" href="/rss.xml">
+
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- 引入第三方 CSS 库 - 通过 <link> 标签 -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Layui CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/layui/2.8.18/css/layui.css">
+
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 基础样式重置 -->
+    <style>
+        /* 最基础的样式重置，确保页面加载时不会出现闪烁 */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* 加载状态样式 */
+        #app-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 18px;
+        }
+
+        .loading-text {
+            text-align: center;
+        }
+
+        /* Vue 应用挂载点 */
+    </style>
+</head>
+<body>
+<!-- 应用加载提示 (可选，用于SPA加载时显示) -->
+<div id="app-loading" style="display: none;">
+    <div class="loading-text">
+        <div>🚀 正在加载穆清兮的博客...</div>
+        <div style="font-size: 14px; margin-top: 10px; opacity: 0.8;">Loading Miku's Blog</div>
+    </div>
+</div>
+
+<!-- Vue 3 应用根容器 -->
+<div id="app">
+    <!-- 应用内容将由 Vue 组件渲染 -->
+</div>
+
+<!-- 脚本引入 -->
+<script type="module" src="/src/main.js"></script>
+<script src="/gui-MusicPlayer/js/gui-MusicPlayer.js" defer></script>
+
+<!-- 错误处理 -->
+<script>
+    // 全局错误处理
+    window.addEventListener('error', function (event) {
+        console.error('全局错误:', event.error);
+    });
+
+    // 未处理的 Promise 拒绝
+    window.addEventListener('unhandledrejection', function (event) {
+        console.error('未处理的 Promise 拒绝:', event.reason);
+    });
+
+    // Vue 应用加载完成后的处理
+    document.addEventListener('DOMContentLoaded', function () {
+        // 可以在这里添加一些初始化逻辑
+        console.log('📝 页面 DOM 加载完成，Vue 应用即将启动');
+
+        // 隐藏加载提示 (如果显示了的话)
+        const loadingElement = document.getElementById('app-loading');
+        if (loadingElement) {
+            // loadingElement.style.display = 'none'; // Vue 会处理加载状态
+        }
+    });
+
+    // Service Worker 注册 (用于 PWA 支持，可选)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            // 可以在这里注册 Service Worker
+            // navigator.serviceWorker.register('/sw.js')
+            //     .then(function(registration) {
+            //         console.log('SW registered: ', registration);
+            //     })
+            //     .catch(function(registrationError) {
+            //         console.log('SW registration failed: ', registrationError);
+            //     });
+        });
+    }
+</script>
+
+</body>
+</html>

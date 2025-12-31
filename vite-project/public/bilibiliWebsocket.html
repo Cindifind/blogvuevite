@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B站直播间弹幕监控</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!--    <link rel="stylesheet" href="css/bilibiliWebsocket.css">-->
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        padding: 25px;
+        margin-bottom: 25px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #333;
+        font-size: 1.4rem;
+    }
+
+    .card-title i {
+        margin-right: 10px;
+        color: #667eea;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-col {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid #667eea;
+        color: #667eea;
+    }
+
+    .btn-outline:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    #status {
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        text-align: center;
+        font-weight: 600;
+        background: #f8f9fa;
+        border: 2px solid #e1e5e9;
+    }
+
+    .status-connected {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .status-disconnected {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .status-connecting {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+
+    #danmuContainer {
+        height: 450px;
+        overflow-y: auto;
+        border: 2px solid #e1e5e9;
+        padding: 20px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-top: 15px;
+    }
+
+    #danmuContainer::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #danmuContainer::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #danmuContainer::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    #danmuContainer::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    .danmu-item {
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        animation: fadeIn 0.3s ease;
+        word-wrap: break-word;
+        line-height: 1.5;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .system-message {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        color: #1976d2;
+    }
+
+    .user-message {
+        background: #f3e5f5;
+        border-left: 4px solid #9c27b0;
+        color: #7b1fa2;
+    }
+
+    .error-message {
+        background: #ffebee;
+        border-left: 4px solid #f44336;
+        color: #c62828;
+    }
+
+    .success-message {
+        background: #e8f5e9;
+        border-left: 4px solid #4caf50;
+        color: #2e7d32;
+    }
+
+    .timestamp {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-right: 10px;
+    }
+
+    #messageStatus {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    footer {
+        text-align: center;
+        color: white;
+        margin-top: 30px;
+        opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 10px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+    body {
+        font-family: "Microsoft YaHei", sans-serif;
+        background: linear-gradient(to right, #ffb6c1, #ffc0cb);
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    header h1 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    header p {
+        color: #666;
+        font-size: 16px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .card-title i {
+        margin-right: 10px;
+        color: #ff69b4;
+    }
+
+    .card-title h2 {
+        margin: 0;
+    }
+
+    .form-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .form-group label i {
+        margin-right: 5px;
+        color: #777;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 20px 12px 45px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        outline: none;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+        border-radius: 15px;
+        resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #ff69b4;
+        box-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
+    }
+
+    .form-group i.fa {
+        position: absolute;
+        left: 15px;
+        top: 38px;
+        color: #777;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .form-group textarea + i.fa {
+        top: 25px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(to right, #ff69b4, #ff8ec7);
+        border: none;
+        border-radius: 25px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .btn:hover {
+        background: linear-gradient(to right, #ff8ec7, #ff69b4);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid #ff69b4;
+        color: #ff69b4;
+    }
+
+    .btn-outline:hover {
+        background: #ff69b4;
+        color: white;
+    }
+
+    #danmuContainer {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background: #f9f9f9;
+    }
+
+    .danmu-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .danmu-item:last-child {
+        border-bottom: none;
+    }
+
+    .timestamp {
+        color: #ff69b4;
+        font-weight: bold;
+    }
+
+    .system-message {
+        color: #6c757d;
+    }
+
+
+    #messageStatus {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        display: none;
+    }
+
+
+    footer {
+        text-align: center;
+        margin-top: 30px;
+        color: #333;
+    }
+
+</style>
+<body>
+<div class="container">
+    <header>
+        <h1><i class="fas fa-comment-dots"></i> B站直播间弹幕监控</h1>
+        <p>实时监控并发送弹幕到B站直播间</p>
+    </header>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-plug"></i>
+            <h2>连接设置</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="roomId"><i class="fas fa-door-open"></i> 直播间房间号</label>
+            <input type="number" id="roomId" placeholder="请输入B站直播间房间号">
+        </div>
+
+        <div class="form-group">
+            <label for="cookie"><i class="fas fa-cookie-bite"></i> Cookie (可选)</label>
+            <input type="text" id="cookie" placeholder="用于连接直播间的Cookie，可留空使用默认值">
+        </div>
+
+        <div class="btn-group">
+            <button id="connectBtn" class="btn">
+                <i class="fas fa-link"></i> 连接直播间
+            </button>
+            <button id="disconnectBtn" class="btn btn-outline">
+                <i class="fas fa-unlink"></i> 断开连接
+            </button>
+        </div>
+    </div>
+
+    <div id="status" class="status-disconnected">
+        <i class="fas fa-circle"></i> 当前状态: 未连接
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-paper-plane"></i>
+            <h2>发送弹幕</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="messageContent"><i class="fas fa-comment"></i> 弹幕内容</label>
+            <textarea id="messageContent" placeholder="请输入要发送的弹幕内容..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="sendCookie"><i class="fas fa-key"></i> 发送弹幕所需Cookie</label>
+            <input type="text" id="sendCookie" placeholder="如果连接时未提供Cookie，请在此处填写（必填）">
+        </div>
+
+        <button id="sendMsgBtn" class="btn">
+            <i class="fas fa-paper-plane"></i> 发送弹幕
+        </button>
+
+        <div id="messageStatus"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-comments"></i>
+            <h2>弹幕信息</h2>
+        </div>
+        <div id="danmuContainer">
+            <div class="danmu-item system-message">
+                <span class="timestamp">[系统]</span>等待连接到B站直播间...
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; font-size: 13px; color: #333;">
+        &copy; 2025 穆清兮 | 个人博客 版权所有 黑ICP备2025040065号
+    </div>
+</div>
+
+<script>
+    class BilibiliDanmuClient {
+        constructor() {
+            this.ws = null;
+            this.isConnected = false;
+            this.currentRoomId = null;
+            this.connectionCookie = null;
+
+            // 获取DOM元素
+            this.roomIdInput = document.getElementById('roomId');
+            this.cookieInput = document.getElementById('cookie');
+            this.connectBtn = document.getElementById('connectBtn');
+            this.disconnectBtn = document.getElementById('disconnectBtn');
+            this.statusDiv = document.getElementById('status');
+            this.danmuContainer = document.getElementById('danmuContainer');
+            this.messageContent = document.getElementById('messageContent');
+            this.sendCookieInput = document.getElementById('sendCookie');
+            this.sendMsgBtn = document.getElementById('sendMsgBtn');
+            this.messageStatus = document.getElementById('messageStatus');
+
+            // 绑定事件
+            this.connectBtn.addEventListener('click', () => this.connect());
+            this.disconnectBtn.addEventListener('click', () => this.disconnect());
+            this.sendMsgBtn.addEventListener('click', () => this.sendMessage());
+
+            // 添加回车连接功能
+            this.roomIdInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.connect();
+            });
+
+            // 添加Ctrl+Enter发送弹幕功能
+            this.messageContent.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') this.sendMessage();
+            });
+        }
+
+        connect() {
+            const roomId = this.roomIdInput.value;
+            let cookie = this.cookieInput.value;
+
+            if (!roomId) {
+                this.addMessage('请输入房间号', 'error-message');
+                return;
+            }
+
+            // 保存连接时使用的cookie
+            this.connectionCookie = cookie;
+
+            // 连接时cookie是可选的，如果为空则不传递
+            if (!cookie) {
+                cookie = '';
+            }
+
+            this.currentRoomId = roomId;
+
+            try {
+                // 创建WebSocket连接
+                this.ws = new WebSocket(`ws://luren.online:8080/user-danmu`);
+
+                this.ws.onopen = () => {
+                    this.isConnected = true;
+                    this.updateStatus('已连接到服务器，正在连接B站直播间...', 'status-connecting');
+                    // 发送连接命令
+                    this.ws.send(`connect:${roomId}:${cookie}`);
+                };
+
+                this.ws.onmessage = (event) => {
+                    const message = event.data;
+
+                    // 检查是否是房间连接成功的消息
+                    if (message.startsWith('房间 ') && message.includes(' 已连接')) {
+                        this.updateStatus('已成功连接到B站直播间', 'status-connected');
+                    }
+                    // 检查是否是房间连接失败的消息
+                    else if (message.startsWith('连接失败:')) {
+                        this.updateStatus('连接B站直播间失败', 'status-disconnected');
+                    }
+                    // 检查是否是房间关闭连接的消息
+                    else if (message.startsWith('房间 ') && message.includes(' 与B站服务器的连接已关闭')) {
+                        this.updateStatus('与B站直播间的连接已断开', 'status-disconnected');
+                    }
+                    // 检查是否是房间连接错误的消息
+                    else if (message.startsWith('房间 ') && message.includes(' 连接B站服务器时发生错误')) {
+                        this.updateStatus('连接B站直播间时发生错误', 'status-disconnected');
+                    }
+
+                    this.addMessage(message, 'system-message');
+                };
+
+                this.ws.onclose = () => {
+                    this.isConnected = false;
+                    this.updateStatus('连接已断开', 'status-disconnected');
+                    this.addMessage('WebSocket连接已关闭', 'error-message');
+                };
+
+                this.ws.onerror = (error) => {
+                    this.addMessage(`连接错误: ${error.message}`, 'error-message');
+                };
+
+                this.updateStatus('正在连接...', 'status-connecting');
+            } catch (e) {
+                this.addMessage(`连接异常: ${e.message}`, 'error-message');
+            }
+        }
+
+        disconnect() {
+            if (this.ws) {
+                this.ws.close();
+            }
+        }
+
+        sendMessage() {
+            const message = this.messageContent.value;
+            let sendCookie = this.sendCookieInput.value;
+
+            if (!this.isConnected) {
+                this.showMessageStatus('请先建立连接', 'error-message');
+                return;
+            }
+
+            if (!message) {
+                this.showMessageStatus('请输入消息内容', 'error-message');
+                return;
+            }
+
+            // 如果连接时提供了cookie，则使用连接时的cookie
+            // 否则要求在发送时提供cookie
+            if (this.connectionCookie && this.connectionCookie.trim() !== '') {
+                sendCookie = this.connectionCookie;
+            } else if (!sendCookie) {
+                this.showMessageStatus('连接时未提供Cookie，请在此处提供Cookie', 'error-message');
+                return;
+            }
+
+            // 调用后端API发送消息
+            fetch('http://luren.online:2345/proxy/bilibili/sendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `roomId=${encodeURIComponent(this.currentRoomId)}&cookie=${encodeURIComponent(sendCookie)}&message=${encodeURIComponent(message)}`
+            })
+                .then(response => response.text())
+                .then(data => {
+                    this.showMessageStatus(`消息发送成功: ${data}`, 'success-message');
+                    this.messageContent.value = '';
+                })
+                .catch(error => {
+                    this.showMessageStatus(`消息发送失败: ${error.message}`, 'error-message');
+                });
+        }
+
+        addMessage(message, className) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `danmu-item ${className}`;
+            messageElement.innerHTML = `<span class="timestamp">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+            this.danmuContainer.appendChild(messageElement);
+            this.danmuContainer.scrollTop = this.danmuContainer.scrollHeight;
+        }
+
+        showMessageStatus(message, className) {
+            this.messageStatus.className = className;
+            this.messageStatus.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+
+            // 3秒后清除状态消息
+            setTimeout(() => {
+                this.messageStatus.textContent = '';
+            }, 3000);
+        }
+
+        updateStatus(status, statusClass) {
+            this.statusDiv.className = statusClass;
+            this.statusDiv.innerHTML = `<i class="fas fa-circle"></i> 当前状态: ${status}`;
+        }
+    }
+
+    // 页面加载完成后初始化客户端
+    document.addEventListener('DOMContentLoaded', () => {
+        new BilibiliDanmuClient();
+    });
+</script>
+</body>
+</html>
