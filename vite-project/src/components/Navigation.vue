@@ -1,4 +1,4 @@
-<template>
+<template xmlns="">
   <div>
     <!-- 加载动画元素 -->
     <div id="loading" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; justify-content: center; align-items: center;">
@@ -221,6 +221,19 @@ const handleClose = () => {
 </script>
 
 <style scoped>
+/* 定义 barbarahand 字体 */
+@font-face {
+  font-family: 'BarbaraHand';
+  src: url('/font/barbarahand-webfont.eot');
+  src: url('/font/barbarahand-webfont.eot?#iefix') format('embedded-opentype'),
+       url('/font/barbarahand-webfont.woff2') format('woff2'),
+       url('/font/barbarahand-webfont.woff') format('woff'),
+       url('/font/barbarahand-webfont.ttf') format('truetype'),
+       url('/font/barbarahand-webfont.svg#barbarahandregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* 从 index_style.css 提取的导航栏相关样式 */
 
 .logo {
