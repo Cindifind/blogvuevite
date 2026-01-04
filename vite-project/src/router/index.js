@@ -51,9 +51,9 @@ const routes = [
       meta: { requiresAuth: true }
     },
     {
-        path: '/musictools',
-        name: '/Musictools',
-        component: () => import('../views/musictools.vue'),
+        path: '/music',
+        name: '/Music',
+        component: () => import('../views/music.vue'),
         meta: { requiresAuth: true }
     }
     // 图片管理页面路由
