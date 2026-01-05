@@ -21,7 +21,7 @@
                 :loading="searching"
               >
                 <template #append>
-                  <el-button @click="searchMusic" :loading="searching" type="primary">
+                  <el-button @click="() => searchMusic(1)" :loading="searching" type="primary">
                     <el-icon v-if="!searching"><Search /></el-icon>
                     搜索歌曲
                   </el-button>
@@ -84,6 +84,19 @@
           @play-song="playMusic"
           @download-song="downloadMusic"
         />
+        <!-- 分页组件 -->
+        <div class="pagination-container" v-if="totalSongs > 0">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[20, 50, 100]"
+            :total="totalSongs"
+            layout="total, sizes, prev, pager, next, jumper"
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
+            class="pagination"
+          />
+        </div>
       </div>
 
       <!-- 单曲ID搜索结果 -->
@@ -288,7 +301,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, h } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElPagination } from 'element-plus'
 import { Search, InfoFilled, Document, VideoPlay, VideoPause, List, Refresh, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import VolumeIcons from './VolumeIcons.vue'
 import { useAuth } from '../composables/useAuth'
@@ -310,6 +323,12 @@ const loadingInfo = ref(null)
 const loadingUrl = ref(null)
 const loadingPlaylist = ref(false)
 const loadingPlaylistInfo = ref(false)
+
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalSongs = ref(0)
+const totalPages = ref(0)
 
 const currentSong = ref(null)
 const currentMusicUrl = ref('')
@@ -395,7 +414,7 @@ const handleApiError = (data, defaultMessage = '操作失败') => {
 }
 
 // 搜索音乐
-const searchMusic = async () => {
+const searchMusic = async (page = 1) => {
   if (!searchKeyword.value.trim()) {
     ElMessage.warning('请输入搜索关键词')
     return
@@ -403,8 +422,8 @@ const searchMusic = async () => {
 
   searching.value = true
   try {
-    // 第一步：搜索获取歌曲ID列表
-    const searchResponse = await fetch(`${API_BASE_URL}/proxy/userMusicSearch?name=${encodeURIComponent(searchKeyword.value)}`, {
+    // 直接获取完整搜索结果，包含分页信息
+    const searchResponse = await fetch(`${API_BASE_URL}/proxy/userMusicSearch?name=${encodeURIComponent(searchKeyword.value)}&t=${page - 1}&l=${pageSize.value}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -416,33 +435,27 @@ const searchMusic = async () => {
       return
     }
     
-    if (searchData.list && searchData.list.length > 0) {
-      // 第二步：根据ID列表获取详细歌曲信息
-      const infoResponse = await fetch(`${API_BASE_URL}/proxy/musicListInfo`, {
-        method: 'POST',
-        headers: {
-          ...getApiHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(searchData.list)
-      })
+    if (searchData.lists && searchData.lists.length > 0) {
+      // 直接使用返回的歌曲数据
+      keywordResults.value = searchData.lists || []
+      searchResults.value = searchData.lists || []
       
-      const infoData = await infoResponse.json()
+      // 设置分页信息
+      totalSongs.value = searchData.songCount || 0
+      totalPages.value = Math.ceil(totalSongs.value / pageSize.value)
+      currentPage.value = page
       
-      // 使用统一错误处理
-      if (!handleApiError(infoData, '获取歌曲信息失败')) {
-        return
-      }
-      
-      searchResults.value = infoData.list || []
-      keywordResults.value = infoData.list || [] // 保存到关键词搜索结果
       // 保存到对应标签页的搜索结果
       tabSearchResults.value.keyword = [...keywordResults.value]
-      ElMessage.success(`找到 ${keywordResults.value.length} 首歌曲`)
+      
+      ElMessage.success(`找到 ${searchData.songCount} 首歌曲，当前显示第 ${page} 页，共 ${totalPages.value} 页`)
     } else {
-      searchResults.value = []
       keywordResults.value = []
+      searchResults.value = []
       tabSearchResults.value.keyword = []
+      totalSongs.value = 0
+      totalPages.value = 0
+      currentPage.value = 1
       ElMessage.info('未找到相关歌曲')
     }
   } catch (error) {
@@ -522,7 +535,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
       currentSong.value = {
         ...song,
         cover: song.picurl || song.al?.picUrl || '/default-music-cover.jpg',
-        artist: song.artistsname || (song.ar && song.ar[0]?.name) || '未知艺术家'
+        artist: song.artistsname || song.artists || (song.ar && song.ar[0]?.name) || '未知艺术家'
       }
       currentMusicUrl.value = data.url
       
@@ -616,7 +629,7 @@ const confirmDownload = async () => {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `${song.name} - ${song.artistsname || song.artist || '未知艺术家'}.mp3`
+      link.download = `${song.name} - ${song.artistsname || song.artists || song.artist || '未知艺术家'}.mp3`
       
       // 触发下载
       document.body.appendChild(link)
@@ -642,7 +655,6 @@ const confirmDownload = async () => {
 }
 
 // 获取歌单
-// 歌单搜索
 const searchByPlaylist = async () => {
   if (!playlistId.value.trim()) {
     ElMessage.warning('请输入歌单ID')
@@ -651,7 +663,7 @@ const searchByPlaylist = async () => {
 
   loadingPlaylist.value = true
   try {
-    // 第一步：获取歌单ID列表
+    // 直接调用新的API接口获取歌单信息
     const response = await fetch(`${API_BASE_URL}/proxy/musicList?id=${playlistId.value}`, {
       method: 'GET',
       headers: getApiHeaders()
@@ -665,24 +677,7 @@ const searchByPlaylist = async () => {
     }
     
     if (data.list && data.list.length > 0) {
-      // 第二步：根据ID列表获取详细歌曲信息
-      const infoResponse = await fetch(`${API_BASE_URL}/proxy/musicListInfo`, {
-        method: 'POST',
-        headers: {
-          ...getApiHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data.list)
-      })
-      
-      const infoData = await infoResponse.json()
-      
-      // 使用统一错误处理
-      if (!handleApiError(infoData, '获取歌单详情失败')) {
-        return
-      }
-      
-      playlist.value = infoData.list || []
+      playlist.value = data.list || []
       selectedSongs.value = []
       // 保存到对应标签页的歌单结果
       tabPlaylistResults.value.playlist = [...playlist.value]
@@ -725,7 +720,7 @@ const getPlaylistInfo = async () => {
     }
     
     // 显示歌单信息
-    const infoText = data.list.map(song => `${song.name} - ${song.artistsname}`).join('\n')
+    const infoText = data.list.map(song => `${song.name} - ${song.artistsname || song.artists || song.artist || '未知艺术家'}`).join('\n')
     ElMessageBox.alert(infoText, '选中歌曲信息', {
       confirmButtonText: '确定'
     })
@@ -955,6 +950,20 @@ watch(selectedQuality, async (newQuality, oldQuality) => {
     await playMusic(currentSong.value, newQuality, true)
   }
 })
+
+// 分页处理函数
+const handlePageChange = (page) => {
+  console.log('页码改变:', page)
+  currentPage.value = page
+  searchMusic(page) // 重新搜索并获取新页面的数据
+}
+
+const handleSizeChange = (size) => {
+  console.log('每页大小改变:', size)
+  pageSize.value = size
+  currentPage.value = 1 // 每页大小改变时重置为第一页
+  searchMusic(1) // 重新搜索第一页数据
+}
 </script>
 
 <style scoped>

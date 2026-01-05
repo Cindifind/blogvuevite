@@ -77,8 +77,8 @@ const emit = defineEmits([
 
 // Methods
 const getArtistName = (song) => {
-  // 统一使用artistsname字段，如果不存在则使用artist字段作为备选
-  return song.artistsname || song.artist || '未知艺术家'
+  // 处理新旧数据结构：优先使用artistsname，然后是artists，最后是artist字段
+  return song.artistsname || song.artists || song.artist || '未知艺术家'
 }
 </script>
 
