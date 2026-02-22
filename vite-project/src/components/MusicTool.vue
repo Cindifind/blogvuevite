@@ -65,6 +65,49 @@
                   </el-button>
                 </template>
               </el-input>
+              
+              <!-- 用户收藏歌单列表 -->
+              <div class="user-playlist-section" v-if="isLoggedIn && userPlaylistIds.length > 0">
+                <div class="user-playlist-title">我的收藏歌单</div>
+                <div class="user-playlist-tags">
+                  <div
+                    v-for="(id, index) in userPlaylistIds"
+                    :key="id"
+                    class="playlist-tag-wrapper"
+                  >
+                    <el-tag
+                      :type="playlistId === id.toString() ? 'success' : 'info'"
+                      class="playlist-tag"
+                      @click="switchToPlaylist(id)"
+                      :effect="playlistId === id.toString() ? 'dark' : 'light'"
+                    >
+                      歌单 {{ index + 1 }}: {{ id }}
+                    </el-tag>
+                    <el-button
+                      class="delete-playlist-btn"
+                      type="danger"
+                      size="small"
+                      circle
+                      @click.stop="deleteFavoritePlaylist(id)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 收藏歌单按钮 -->
+              <div class="playlist-actions" v-if="playlist.length > 0 && isLoggedIn">
+                <el-button 
+                  @click="favoriteCurrentPlaylist" 
+                  type="warning" 
+                  size="small"
+                  :icon="Star"
+                  :disabled="userPlaylistIds.includes(parseInt(playlistId))"
+                >
+                  {{ userPlaylistIds.includes(parseInt(playlistId)) ? '已收藏' : '收藏此歌单' }}
+                </el-button>
+              </div>
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -300,15 +343,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, h } from 'vue'
+import { ref, reactive, computed, watch, h, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, ElPagination } from 'element-plus'
-import { Search, InfoFilled, Document, VideoPlay, VideoPause, List, Refresh, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { Search, InfoFilled, Document, VideoPlay, VideoPause, List, Refresh, ArrowLeft, ArrowRight, Star, Delete } from '@element-plus/icons-vue'
 import VolumeIcons from './VolumeIcons.vue'
 import { useAuth } from '../composables/useAuth'
 import SongList from './SongList.vue'
 
 // 使用用户认证
 const { isLoggedIn, token } = useAuth()
+
+// 用户收藏歌单相关
+const userPlaylistIds = ref([])
+const loadingUserPlaylist = ref(false)
 
 // 响应式数据
 const searchKeyword = ref('')
@@ -964,6 +1011,131 @@ const handleSizeChange = (size) => {
   currentPage.value = 1 // 每页大小改变时重置为第一页
   searchMusic(1) // 重新搜索第一页数据
 }
+
+// 获取用户收藏歌单
+const fetchUserFavoritePlaylist = async () => {
+  if (!isLoggedIn.value) return
+  
+  loadingUserPlaylist.value = true
+  try {
+    const response = await fetch(`${API_BASE_URL}/proxy/userMusicList`, {
+      method: 'GET',
+      headers: getApiHeaders()
+    })
+    
+    const data = await response.json()
+    
+    if (data.code === 200 && data.list) {
+      // 解析歌单ID列表
+      let playlistIds = []
+      try {
+        playlistIds = JSON.parse(data.list)
+      } catch (e) {
+        // 如果不是JSON格式，尝试按字符串解析
+        const match = data.list.match(/\d+/g)
+        if (match) {
+          playlistIds = match.map(id => parseInt(id))
+        }
+      }
+      
+      if (playlistIds && playlistIds.length > 0) {
+        // 保存所有歌单ID
+        userPlaylistIds.value = playlistIds
+        // 自动加载第一个歌单
+        playlistId.value = playlistIds[0].toString()
+        await searchByPlaylist()
+        ElMessage.success('已自动加载您的收藏歌单')
+      }
+    }
+  } catch (error) {
+    console.error('获取用户收藏歌单失败:', error)
+  } finally {
+    loadingUserPlaylist.value = false
+  }
+}
+
+// 收藏当前歌单
+const favoriteCurrentPlaylist = async () => {
+  if (!isLoggedIn.value) {
+    ElMessage.warning('请先登录后再收藏歌单')
+    return
+  }
+  
+  if (!playlistId.value.trim()) {
+    ElMessage.warning('当前没有可收藏的歌单')
+    return
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/proxy/updateUserMusicList`, {
+      method: 'POST',
+      headers: {
+        ...getApiHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([playlistId.value])
+    })
+    
+    const data = await response.json()
+    
+    if (data.code === 200) {
+      // 将新歌单ID添加到列表
+      const newId = parseInt(playlistId.value)
+      if (!userPlaylistIds.value.includes(newId)) {
+        userPlaylistIds.value.push(newId)
+      }
+      ElMessage.success('歌单收藏成功')
+    } else {
+      ElMessage.error(data.message || '收藏失败')
+    }
+  } catch (error) {
+    console.error('收藏歌单失败:', error)
+    ElMessage.error('收藏歌单失败，请检查网络连接')
+  }
+}
+
+// 切换到指定歌单
+const switchToPlaylist = async (id) => {
+  playlistId.value = id.toString()
+  await searchByPlaylist()
+}
+
+// 删除收藏歌单
+const deleteFavoritePlaylist = async (id) => {
+  if (!isLoggedIn.value) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/proxy/deleteUserMusicList`, {
+      method: 'POST',
+      headers: {
+        ...getApiHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([id.toString()])
+    })
+    
+    const data = await response.json()
+    
+    if (data.code === 200) {
+      // 从列表中移除
+      userPlaylistIds.value = userPlaylistIds.value.filter(playlistId => playlistId !== id)
+      ElMessage.success('歌单删除成功')
+    } else {
+      ElMessage.error(data.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除歌单失败:', error)
+    ElMessage.error('删除歌单失败，请检查网络连接')
+  }
+}
+
+// 组件挂载时获取用户收藏歌单
+onMounted(() => {
+  fetchUserFavoritePlaylist()
+})
 </script>
 
 <style scoped>
@@ -1096,6 +1268,96 @@ const handleSizeChange = (size) => {
 .search-box {
   max-width: 700px;
   margin: 0 auto;
+}
+
+/* 用户收藏歌单列表区域 */
+.user-playlist-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--border-radius-small);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-playlist-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-playlist-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--secondary-gradient);
+  border-radius: 2px;
+}
+
+.user-playlist-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.playlist-tag-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.playlist-tag {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+}
+
+.playlist-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.delete-playlist-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  min-height: auto;
+}
+
+.delete-playlist-btn .el-icon {
+  font-size: 12px;
+}
+
+/* 歌单操作按钮区域 */
+.playlist-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.playlist-actions .el-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none;
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.playlist-actions .el-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.playlist-actions .el-button:disabled {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  opacity: 0.8;
 }
 
 /* 使用ID选择器避免样式污染 - 搜索框样式 */
