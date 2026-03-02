@@ -1084,7 +1084,7 @@ const cleanInvalidFiles = async () => {
     
     for (const service of cleanServices) {
       try {
-        const cleanUrl = `https://${service.address}`
+        const cleanUrl = `${service.address}`
         console.log(`正在清理: ${cleanUrl}`)
         
         const cleanResponse = await fetch(cleanUrl, {
