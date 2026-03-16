@@ -13,20 +13,24 @@
         <div id="stat-title-views"><i class="fas fa-users"></i> 访问人数</div>
         <div id="view-count">{{ viewCount }}</div>
       </div>
-      <!-- 新增卡片：博主正在玩 -->
-      <div id="stat-box-playing">
-        <div id="stat-title-playing"><i class="fas fa-gamepad"></i>{{ isRbqBroken ? '您的小伙伴已下线' : '电脑' }}</div>
+      <!-- 博主正在玩卡片 -->
+      <div v-if="showPlayerCard" id="stat-box-playing">
+        <div id="stat-title-playing"><i class="fas fa-gamepad"></i>电脑正在使用</div>
         <ul id="playing-list">
           <li v-for="item in playingSoft" :key="item" class="playing-item">{{ item }}</li>
         </ul>
       </div>
-      <!-- 新增卡片：手机正在玩 -->
+      <!-- 手机正在玩卡片 -->
       <div v-if="showPhoneCard" id="stat-box-phone">
-        <div id="stat-title-phone"><i class="fas fa-mobile-alt"></i>手机</div>
+        <div id="stat-title-phone"><i class="fas fa-mobile-alt"></i>手机正在使用</div>
         <ul id="phone-playing-list">
           <li v-if="phoneSoft" class="playing-item phone-soft">{{ phoneSoft }}</li>
           <li v-if="batteryLevel !== null" class="playing-item battery-level">电量：{{ batteryLevel }}%</li>
         </ul>
+      </div>
+      <!-- 离线提示卡片 -->
+      <div v-if="!showPlayerCard && !showPhoneCard" id="stat-box-offline">
+        <div id="stat-title-offline"><i class="fas fa-gamepad"></i>您的小伙伴已下线</div>
       </div>
       <div class="time-units">
           <div class="time-unit">
@@ -132,12 +136,12 @@ const fetchPageViews = async () => {
   }
 }
 
-// 方法：获取“博主正在玩”
+// 方法：获取"博主正在玩"
 const fetchPlayingSoft = async () => {
   try {
     const response = await fetch('https://luren.online:8080/stalkLook?name=%E7%A9%86%E6%B8%85%E5%85%AE')
     if (!response.ok) {
-      throw new Error(`HTTP错误: ${response.status}`)
+      throw new Error(`HTTP错误：${response.status}`)
     }
     const data = await response.json()
 
@@ -147,41 +151,42 @@ const fetchPlayingSoft = async () => {
       (typeof data === 'string' ? data : '') ||
       (typeof data?.msg === 'string' ? data.msg : '') ||
       (typeof data?.message === 'string' ? data.message : '')
+
+    // 如果返回特殊提示，显示离线状态
+    if (msgCandidate && msgCandidate.includes(BROKEN_MSG)) {
+      showPlayerCard.value = false
+      showPhoneCard.value = false
+      playingSoft.value = []
+      phoneSoft.value = ''
+      batteryLevel.value = null
+      return
+    }
     
-    // 判断是否有线上数据
-    let hasOnlineData = false
-        
-    // 处理博主正在玩的数据
-    if (Array.isArray(data.soft) && data.soft.length > 0) {
-      playingSoft.value = data.soft
+    // 处理电脑数据（新结构：data.computer.soft）
+    if (data.computer && Array.isArray(data.computer.soft) && data.computer.soft.length > 0) {
+      playingSoft.value = data.computer.soft
       showPlayerCard.value = true
-      hasOnlineData = true
     } else {
       playingSoft.value = []
       showPlayerCard.value = false
     }
-        
+    
     // 处理手机信息
     if (data.phone) {
       showPhoneCard.value = true
       phoneSoft.value = data.phone.phoneSoft || ''
       batteryLevel.value = data.phone.batteryLevel !== undefined ? data.phone.batteryLevel : null
-      hasOnlineData = true
+      // 使用手机的 time 作为最后更新时间
+      if (data.phone.time) {
+        updateTime.value = new Date(Number(data.phone.time)).toLocaleString()
+      }
     } else {
       showPhoneCard.value = false
       phoneSoft.value = ''
       batteryLevel.value = null
     }
-        
-    // 使用接口返回的 time 作为"最后更新"
-    if (data.time) {
-      const t = Number(data.time)
-      if (!Number.isNaN(t)) {
-        updateTime.value = new Date(t).toLocaleString()
-      }
-    }
   } catch (error) {
-    console.error('获取“博主正在玩”失败:', error)
+    console.error('获取"博主正在玩"失败:', error)
   }
 }
 
