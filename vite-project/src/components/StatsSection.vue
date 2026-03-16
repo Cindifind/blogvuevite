@@ -15,9 +15,17 @@
       </div>
       <!-- 新增卡片：博主正在玩 -->
       <div id="stat-box-playing">
-        <div id="stat-title-playing"><i class="fas fa-gamepad"></i>{{ isRbqBroken ? '您的小伙伴已下线' : '您的小伙伴正在玩' }}</div>
+        <div id="stat-title-playing"><i class="fas fa-gamepad"></i>{{ isRbqBroken ? '您的小伙伴已下线' : '电脑' }}</div>
         <ul id="playing-list">
           <li v-for="item in playingSoft" :key="item" class="playing-item">{{ item }}</li>
+        </ul>
+      </div>
+      <!-- 新增卡片：手机正在玩 -->
+      <div v-if="showPhoneCard" id="stat-box-phone">
+        <div id="stat-title-phone"><i class="fas fa-mobile-alt"></i>手机</div>
+        <ul id="phone-playing-list">
+          <li v-if="phoneSoft" class="playing-item phone-soft">{{ phoneSoft }}</li>
+          <li v-if="batteryLevel !== null" class="playing-item battery-level">电量：{{ batteryLevel }}%</li>
         </ul>
       </div>
       <div class="time-units">
@@ -70,7 +78,10 @@ const runningTime = reactive({
 const updateTime = ref('--')
 const viewCount = ref('加载中...')
 const playingSoft = ref([])
-const isRbqBroken = ref(false)
+const showPlayerCard = ref(false)
+const showPhoneCard = ref(false)
+const phoneSoft = ref('')
+const batteryLevel = ref(null)
 
 // 网站启动日期
 const siteLaunchDate = new Date('2025-07-01T00:00:00')
@@ -136,22 +147,33 @@ const fetchPlayingSoft = async () => {
       (typeof data === 'string' ? data : '') ||
       (typeof data?.msg === 'string' ? data.msg : '') ||
       (typeof data?.message === 'string' ? data.message : '')
-
-    if (msgCandidate && msgCandidate.includes(BROKEN_MSG)) {
-      isRbqBroken.value = true
-      playingSoft.value = []
-      // 若返回该提示，则不再继续渲染列表数据
-      return
-    } else {
-      isRbqBroken.value = false
-    }
-    // 渲染列表
-    if (Array.isArray(data.soft)) {
+    
+    // 判断是否有线上数据
+    let hasOnlineData = false
+        
+    // 处理博主正在玩的数据
+    if (Array.isArray(data.soft) && data.soft.length > 0) {
       playingSoft.value = data.soft
+      showPlayerCard.value = true
+      hasOnlineData = true
     } else {
       playingSoft.value = []
+      showPlayerCard.value = false
     }
-    // 使用接口返回的 time 作为“最后更新”
+        
+    // 处理手机信息
+    if (data.phone) {
+      showPhoneCard.value = true
+      phoneSoft.value = data.phone.phoneSoft || ''
+      batteryLevel.value = data.phone.batteryLevel !== undefined ? data.phone.batteryLevel : null
+      hasOnlineData = true
+    } else {
+      showPhoneCard.value = false
+      phoneSoft.value = ''
+      batteryLevel.value = null
+    }
+        
+    // 使用接口返回的 time 作为"最后更新"
     if (data.time) {
       const t = Number(data.time)
       if (!Number.isNaN(t)) {
@@ -206,7 +228,9 @@ onUnmounted(() => {
 
 #stat-box-running,
 #stat-box-views,
-#stat-box-playing {
+#stat-box-playing,
+#stat-box-phone,
+#stat-box-offline {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   padding: 12px 25px;
@@ -220,14 +244,18 @@ onUnmounted(() => {
 
 #stat-box-running:hover,
 #stat-box-views:hover,
-#stat-box-playing:hover {
+#stat-box-playing:hover,
+#stat-box-phone:hover,
+#stat-box-offline:hover {
   transform: translateY(-5px);
   background: rgba(255, 255, 255, 0.15);
 }
 
 #stat-title-running,
 #stat-title-views,
-#stat-title-playing {
+#stat-title-playing,
+#stat-title-phone,
+#stat-title-offline {
   font-size: 1.1rem;
   margin-bottom: 10px;
   color: #fff94c;
@@ -292,7 +320,8 @@ onUnmounted(() => {
 }
 
 /* Playing 列表样式 */
-#playing-list {
+#playing-list,
+#phone-playing-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -310,6 +339,17 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 手机特殊样式 */
+.phone-soft {
+  background: rgba(76, 219, 255, 0.15);
+  border: 1px solid rgba(76, 219, 255, 0.3);
+}
+
+.battery-level {
+  background: rgba(100, 255, 100, 0.15);
+  border: 1px solid rgba(100, 255, 100, 0.3);
+}
+
 #last-updated {
   margin-top: 20px;
   font-size: 0.9rem;
@@ -323,7 +363,9 @@ onUnmounted(() => {
   
   #stat-box-running,
   #stat-box-views,
-  #stat-box-playing {
+  #stat-box-playing,
+  #stat-box-phone,
+  #stat-box-offline {
     min-width: 100%;
   }
   
