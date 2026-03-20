@@ -2,6 +2,33 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import initArgon2, { argon2HashDefault, argon2_hash_with_salt } from '../wasm/argon2_wasm.js'
+
+let wasmInitialized = false
+let argon2HashEmail = null
+let argon2HashWithSalt = null
+
+async function initWasm() {
+    if (wasmInitialized) return true
+    try {
+        const wasmUrl = new URL('../wasm/argon2_wasm_bg.wasm', import.meta.url)
+        await initArgon2(wasmUrl)
+
+        argon2HashEmail = argon2HashDefault
+        argon2HashWithSalt = argon2_hash_with_salt
+        
+        if (typeof argon2HashEmail !== 'function' || typeof argon2HashWithSalt !== 'function') {
+            throw new Error('无法从 WASM 模块获取哈希函数')
+        }
+        
+        wasmInitialized = true
+        console.log('WASM 模块初始化成功')
+        return true
+    } catch (error) {
+        console.error('WASM 模块初始化失败:', error)
+        return false
+    }
+}
 
 // 从 localStorage 获取 token（辅助函数）
 function getSavedToken() {
@@ -36,12 +63,36 @@ export const useUserStore = defineStore('user', () => {
         isLoading.value = true
         
         try {
-            // 使用URL编码的表单格式发送数据
+            const initialized = await initWasm()
+            if (!initialized) {
+                throw new Error('WASM 初始化失败')
+            }
+            
+            // 第一步：用 email 计算 hash，然后调用 /getsalt 获取真正的盐值
+            const emailHash = argon2HashEmail(email)
+            console.log('Email hash:', emailHash)
+            
+            const getsaltResponse = await fetch(`https://luren.online:2345/proxy/getsalt?email=${encodeURIComponent(email)}&hash=${encodeURIComponent(emailHash)}`)
+            const getsaltData = await getsaltResponse.json()
+            
+            if (!getsaltResponse.ok || getsaltData.code !== 200) {
+                throw new Error(getsaltData.message || '获取盐值失败')
+            }
+            
+            const salt = getsaltData.data
+            console.log('获取到的盐值:', salt)
+            
+            // 第二步：用 email + password 和返回的盐值计算密码 hash
+            const passwordWithEmail = email + password
+            const passwordHash = argon2HashWithSalt(passwordWithEmail, salt)
+            console.log('密码 hash:', passwordHash)
+            
+            // 第三步：用 email 作为用户名，调用 /login 接口
             const params = new URLSearchParams()
-            params.append('email', email)
-            params.append('password', password)
-
-            const response = await fetch('https://luren.online:2345/proxy/login', {
+            params.append('emailHash', emailHash)
+            params.append('password', passwordHash)
+            const response = await fetch('http://localhost:8080/login', {
+            // const response = await fetch('https://luren.online:2345/proxy/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
