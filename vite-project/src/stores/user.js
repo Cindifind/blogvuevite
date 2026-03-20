@@ -91,8 +91,8 @@ export const useUserStore = defineStore('user', () => {
             const params = new URLSearchParams()
             params.append('emailHash', emailHash)
             params.append('password', passwordHash)
-            const response = await fetch('http://localhost:8080/login', {
-            // const response = await fetch('https://luren.online:2345/proxy/login', {
+            // const response = await fetch('http://localhost:8080/login', {
+            const response = await fetch('https://luren.online:2345/proxy/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
