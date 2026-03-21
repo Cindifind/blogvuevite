@@ -17,6 +17,7 @@ const securityHeadersPlugin = {
 };
 
 export default defineConfig({
+    base: '/',
     plugins: [vue(), securityHeadersPlugin],
     server: {
         port: 3000,
@@ -25,9 +26,7 @@ export default defineConfig({
             'X-Content-Type-Options': 'nosniff'
         },
         // 配置历史模式路由回退
-        historyApiFallback: {
-            index: '/index.html'
-        }
+        historyApiFallback: true
     },
     build: {
         rollupOptions: {
