@@ -84,7 +84,13 @@ const getArtistName = (song) => {
 
 <style scoped>
 .song-list {
-  margin-bottom: 30px;
+  margin: 0 auto 30px;
+  width: min(860px, 100%);
+  --transition: all 0.25s ease;
+  --sl-accent: var(--playerColor-3, #667eea);
+  --sl-accent-2: var(--playerColor-6, #764ba2);
+  --sl-accent-soft: color-mix(in srgb, var(--sl-accent) 22%, transparent);
+  --sl-accent-ring: color-mix(in srgb, var(--sl-accent) 35%, transparent);
 }
 
 .song-list h3 {
@@ -110,6 +116,7 @@ const getArtistName = (song) => {
   flex-direction: column;
   gap: 15px;
   max-height: 500px;
+  min-height: 420px;
   overflow-y: auto;
   padding-right: 10px;
 }
@@ -124,13 +131,13 @@ const getArtistName = (song) => {
 }
 
 .song-items::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--sl-accent) 0%, var(--sl-accent-2) 100%);
   border-radius: 10px;
   transition: var(--transition);
 }
 
 .song-items::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, var(--sl-accent-2) 0%, var(--sl-accent) 100%);
 }
 
 .song-item {
@@ -172,9 +179,9 @@ const getArtistName = (song) => {
 }
 
 .song-item.active {
-  border: 2px solid #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  border: 2px solid var(--sl-accent);
+  background: linear-gradient(135deg, var(--sl-accent-soft) 0%, color-mix(in srgb, var(--sl-accent-2) 18%, transparent) 100%);
+  box-shadow: 0 0 20px var(--sl-accent-ring);
 }
 
 .song-info {

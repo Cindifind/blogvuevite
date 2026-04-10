@@ -119,47 +119,54 @@ function initMusicPlayer() {
         }
 
         // 播放器HTML结构
-        let musicStr = `    
-        <div class="gui-MusicPlayer-Main">
-        <div class="gui-switchPlayer"><i class="iconfont icon-jiantou2"></i></div>
-        <div class="gui-insideSong">
-            <div class="gui-songPicture"><img src="./gui-MusicPlayer/images/playerLoad.gif"
-                                              alt="加载中..." class="gui-musicPicture"><i
-                    class="gui-musicalNote iconfont icon-yinle"></i><i
-                    class="gui-musicalNote iconfont icon-yinle"></i><i class="gui-musicalNote iconfont icon-yinle"></i>
-            </div>
-            <div class="gui-musicControl">
-                <div class="gui-topControl">
-                    <div class="gui-introduce"><h3 class="gui-songName"></h3>
-                        <p class="gui-singer"></p></div>
-                    <ul class="gui-playerControl">
-                        <li class="gui-previousSong"><i class="iconfont icon-shangyishou"></i></li>
-                        <li class="gui-playbackControl"><i class="gui-pause iconfont icon-zantingtingzhi"
-                                                           style="display: none;"></i><i
-                                class="gui-playBack iconfont icon-bofang" style="display: block;"></i></li>
-                        <li class="gui-nextSong"><i class="iconfont icon-xiayishou"></i></li>
-                    </ul>
-                </div>
-                
-                <ul class="gui-bottomControl">
-                    <li class="gui-audioFrequency"><i class="iconfont icon-shengyin-kai"></i></li>
-                    <li class="gui-progressBar">
-                        <h5 class="gui-totalAudioProgress"><p class="gui-audioProgress" style="width: 0;"></p></h5>
-                    </li>
-                    <li class="gui-playlistBtn"><i class="iconfont icon-gedan"></i></li>
-                </ul>
-                <div id="src1">
-                    <p id="str1">此歌曲为上一位小可爱的搜索结果</p><input type="text" id="searchInput" placeholder="请输入搜索内容">
-                    <button id ="searchMusicButton" onclick="searchMusic()">&nbsp;搜索&nbsp;</button>  
+        let musicStr = `<div class="gui-MusicPlayer-Main">
+    <div class="gui-switchPlayer">
+        <i class="iconfont icon-jiantou2"></i>
+    </div>
+
+    <div class="gui-insideSong">
+        <div class="gui-songPicture">
+            <img
+                src="./gui-MusicPlayer/images/playerLoad.gif"
+                alt="加载中..."
+                class="gui-musicPicture"
+            >
+            <i class="gui-musicalNote iconfont icon-yinle"></i>
+            <i class="gui-musicalNote iconfont icon-yinle"></i>
+            <i class="gui-musicalNote iconfont icon-yinle"></i>
+        </div>
+
+        <div class="gui-musicControl">
+            <div class="gui-topControl">
+                <div class="gui-introduce">
+                    <h3 class="gui-songName"></h3>
+                    <p class="gui-singer"></p>
                 </div>
 
+                <ul class="gui-playerControl">
+                    <li class="gui-previousSong"><i class="iconfont icon-shangyishou"></i></li>
+                    <li class="gui-playbackControl">
+                        <i class="gui-pause iconfont icon-zantingtingzhi" style="display: none;"></i>
+                        <i class="gui-playBack iconfont icon-bofang" style="display: block;"></i>
+                    </li>
+                    <li class="gui-nextSong"><i class="iconfont icon-xiayishou"></i></li>
+                </ul>
             </div>
-            
+
+            <ul class="gui-bottomControl">
+                <li class="gui-audioFrequency"><i class="iconfont icon-shengyin-kai"></i></li>
+                <li class="gui-progressBar">
+                    <h5 class="gui-totalAudioProgress"><p class="gui-audioProgress" style="width: 0;"></p></h5>
+                </li>
+                <li class="gui-playlistBtn"><i class="iconfont icon-gedan"></i></li>
+            </ul>
         </div>
-        <div class="gui-outsideSongList">
-            <ul class="gui-listOfSongs"></ul>
-        </div>
-    </div>`
+    </div>
+
+    <div class="gui-outsideSongList">
+        <ul class="gui-listOfSongs"></ul>
+    </div>
+</div>`
 
         // 歌词HTML结构
         let lyricStr = `<div id="gui-lyric"><ul class="gui-AllLyric-box"></ul></div>`
@@ -170,10 +177,9 @@ function initMusicPlayer() {
 
         function allPlayerFeatures() {
             // 创建音频元素
-            const guiAudio = document.createElement('audio')
-            guiAudio.id = 'gui-musicAudio'
-            playerBody.appendChild(guiAudio)
-            const guiMusicAudio = document.getElementById('gui-musicAudio')
+            const guiMusicAudio = document.createElement('audio')
+            guiMusicAudio.id = 'gui-musicAudio'
+            playerBody.appendChild(guiMusicAudio)
             guiMusicAudio.controls = 0
 
             // 创建歌词元素 - 总是创建歌词元素，不管是否使用本地音乐
@@ -239,11 +245,18 @@ function initMusicPlayer() {
                 , listOfSongs = MusicPlayer.querySelector('.gui-listOfSongs')
                 , musicalNote = MusicPlayer.querySelectorAll('.gui-musicalNote')
                 , guiLyric = playerBody.querySelector('#gui-lyric')
-                , searchInput = MusicPlayer.querySelector('#searchInput')
 
-            // 设置主题样式
-            const themeStyle = MusicPlayer.getAttribute('data-themeColor')
-            themeStyle === null ? MusicPlayerMain.classList.add('gui-original') : MusicPlayerMain.classList.add(themeStyle)
+            // 设置主题样式（支持从 localStorage 读取）
+            let themeStyle = MusicPlayer.getAttribute('data-themeColor')
+            try {
+                const storedTheme = localStorage.getItem('musictool-theme')
+                if (storedTheme) {
+                    themeStyle = storedTheme
+                    MusicPlayer.setAttribute('data-themeColor', storedTheme)
+                }
+            } catch (e) {}
+            themeStyle = themeStyle || 'gui-original'
+            MusicPlayerMain.classList.add(themeStyle)
 
             // 图片懒加载
             const lazyLoadImages = () => {
@@ -402,19 +415,43 @@ function initMusicPlayer() {
 
             // 全局变量 - 当前播放索引
             let currentSongIndex = 0
-            let isFunctionTriggered = false
+            const playlistIdKey = 'musictool-plugin-playlist'
 
-            // 渲染歌曲列表（核心：可被搜索调用）
-            const renderSongList = async (dataUrl, isSearch = false) => {
+            const loadCachedPlaylistId = () => {
                 try {
-                    // 清空现有列表
+                    const raw = localStorage.getItem(playlistIdKey)
+                    if (!raw) return null
+                    const text = String(raw).trim()
+                    if (!text) return null
+                    if (text.startsWith('{')) {
+                        const obj = JSON.parse(text)
+                        const id = String(obj && obj.playlistId ? obj.playlistId : '').trim()
+                        if (!id) return null
+                        localStorage.setItem(playlistIdKey, id)
+                        return id
+                    }
+                    return text
+                } catch (e) {
+                    return null
+                }
+            }
+
+            const renderSongList = async (dataUrl) => {
+                try {
                     clearSongList()
-                    displayPopup(isSearch ? '搜索中...' : '加载歌曲列表...')
+                    displayPopup('加载歌曲列表...')
 
                     // 获取歌曲数据
-                    let res = await fetchData(dataUrl)
-                    if (interfaceAndLocal === null && guiSongList !== null) {
-                        res = res.playlist.tracks
+                    let res
+                    const cachedPlaylistId = loadCachedPlaylistId()
+                    if (cachedPlaylistId) {
+                        const playlistRes = await fetchData(`https://luren.online:2345/proxy/musicList?id=${cachedPlaylistId}`)
+                        res = playlistRes && Array.isArray(playlistRes.list) ? playlistRes.list : []
+                    } else {
+                        res = await fetchData(dataUrl)
+                        if (interfaceAndLocal === null && guiSongList !== null) {
+                            res = res.playlist.tracks
+                        }
                     }
 
                     // 生成列表项
@@ -422,15 +459,32 @@ function initMusicPlayer() {
                         res.map(async data => {
                             const musicId = data.id
                             const musicName = data.name
-                            const artistsname = data.artistsname || data.al.name
-                            const picurl = data.picurl || data.al.picUrl
+                            const artistsname = data.artistsname || data.artist || data.artists || (data.ar && data.ar[0] && data.ar[0].name) || (data.al && data.al.name) || '未知艺术家'
+                            const rawPicurl = data.picurl || (data.al && data.al.picUrl) || './gui-MusicPlayer/images/playerLoad.gif'
+                            const picurl = String(rawPicurl).trim().replace(/`/g, '')
                             // 使用歌曲ID作为标识符，实际播放时再获取URL
                             const mp3 = `song:${musicId}`
-                            const duration = interfaceAndLocal === null
-                                ? data.duration !== undefined
-                                    ? convertTime(data.duration)
-                                    : millisecondConversion(data.dt)
-                                : data.musicDuration
+                            const normalizeDurationText = (value) => {
+                                if (value === null || value === undefined) return '00:00'
+                                const text = String(value).trim().replace(/`/g, '')
+                                if (text.includes(':')) {
+                                    const parts = text.split(':').map(p => p.trim())
+                                    if (parts.length === 3 && parts[0] === '00') return `${parts[1]}:${parts[2]}`
+                                    if (parts.length === 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
+                                    return text
+                                }
+                                const n = Number(text)
+                                if (Number.isFinite(n)) return millisecondConversion(n)
+                                return '00:00'
+                            }
+
+                            const duration = cachedPlaylistId
+                                ? normalizeDurationText(data.musicDuration || data.duration || data.dt || 0)
+                                : interfaceAndLocal === null
+                                    ? data.duration !== undefined
+                                        ? convertTime(data.duration)
+                                        : millisecondConversion(data.dt)
+                                    : normalizeDurationText(data.musicDuration)
                             playerMusicItem(musicId, mp3, picurl, musicName, artistsname, duration)
                         })
                     )
@@ -460,19 +514,10 @@ function initMusicPlayer() {
                     // 绑定列表项事件
                     bindSongEvents(songsItem)
 
-                    // 如果是搜索操作，默认播放第一首 - 已禁用自动播放
-                    if (isSearch) {
-                        currentSongIndex = 0
-                        updateSong(0)
-                        // playMusic() - 已禁用搜索后的自动播放
-                        addPlaying()
-                    } else {
-                        // 初始加载时播放第一首 - 已禁用自动播放
-                        updateSong(0)
-                    }
+                    updateSong(0)
 
                     lazyLoadImages()
-                    displayPopup(isSearch ? `搜索完成，找到 ${songsItem.length} 首歌曲` : `加载完成，共 ${songsItem.length} 首歌曲`)
+                    displayPopup(`加载完成，共 ${songsItem.length} 首歌曲`)
                 } catch (error) {
                     console.error(`列表加载错误：${error}`)
                     displayPopup('加载失败，请重试')
@@ -484,7 +529,6 @@ function initMusicPlayer() {
                 // 列表项点击事件
                 songsItem.forEach((item, index) => {
                     item.addEventListener('click', () => {
-                        isFunctionTriggered = true
                         currentSongIndex = index
                         updateSong(index)
                     })
@@ -548,12 +592,10 @@ function initMusicPlayer() {
                     try {
                         const lyricResponse = await fetch(`https://luren.online:2345/proxy/getLyric?id=${musicId}`, {headers: getOptionalAuthHeaders()});
                         const lyricData = await lyricResponse.json();
-                        console.log("歌词数据:", lyricData); // 调试信息
 
                         guiAllLyri.innerHTML = '';
                         if (lyricData.code === "200" && lyricData.lrc?.lyric) {
                             const lines = lyricData.lrc.lyric.split('\n');
-                            let lyricIndex = 0;
 
                             lines.forEach(line => {
                                 // 处理时间标签行
@@ -580,7 +622,6 @@ function initMusicPlayer() {
                                         const li = document.createElement('li');
                                         li.classList.add('gui-ly');
                                         li.dataset.time = time;
-                                        li.dataset.index = lyricIndex++; // 添加索引用于调试
                                         li.textContent = text;
                                         guiAllLyri.appendChild(li);
                                     }
@@ -591,18 +632,16 @@ function initMusicPlayer() {
                                         const li = document.createElement('li');
                                         li.classList.add('gui-ly');
                                         li.dataset.time = -1; // 没有时间的行设置为-1
-                                        li.dataset.index = lyricIndex++;
                                         li.textContent = text;
                                         guiAllLyri.appendChild(li);
                                     }
                                 }
                             });
-
-                            // 添加调试信息
-                            console.log(`共加载 ${guiAllLyri.children.length} 行歌词`);
                         } else {
                             console.error("获取歌词失败:", lyricData.message);
                         }
+
+                        highlightLyric();
                     } catch (error) {
                         console.error("获取歌词时发生错误:", error);
                     }
@@ -610,6 +649,7 @@ function initMusicPlayer() {
             }
 
             // 歌词高亮显示功能
+            let activeLyricItem = null
             function highlightLyric() {
                 // 检查guiLyric是否存在
                 if (guiLyric) {
@@ -621,15 +661,7 @@ function initMusicPlayer() {
                         return;
                     }
 
-                        // 移除所有高亮
-                        lyricItems.forEach(item => {
-                            item.classList.remove('gui-currentLyric');
-                            // 重置CSS控制的样式
-                            item.style.opacity = '';
-                            item.style.transform = '';
-                            item.style.fontSize = '';
-                            item.style.color = '';
-                        });
+                    lyricItems.forEach(item => item.classList.remove('gui-currentLyric'));
 
                     // 找到当前应该高亮的歌词
                     let currentLyric = null;
@@ -645,10 +677,16 @@ function initMusicPlayer() {
                     });
 
                     // 高亮当前歌词
+                    if (!currentLyric) {
+                        currentLyric = Array.from(lyricItems).find(item => parseFloat(item.dataset.time) !== -1) || lyricItems[0]
+                    }
+
                     if (currentLyric) {
                         currentLyric.classList.add('gui-currentLyric');
-                        // 滚动到当前歌词
-                        currentLyric.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        if (activeLyricItem !== currentLyric) {
+                            activeLyricItem = currentLyric
+                            currentLyric.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        }
                     }
                 }
             }
@@ -665,20 +703,12 @@ function initMusicPlayer() {
                         displayPopup(`正在播放：${songName.textContent}`)
                         desiredAutoPlay = true
                         tryPlayMusic('用户点击播放')
-                        isFunctionTriggered = true
                     } else {
                         displayPopup('请先选择歌曲')
                     }
                 }
             }
             playbackControl.addEventListener('click', togglePlayback)
-
-            // 键盘空格控制播放暂停 - 已禁用
-            // window.addEventListener('keyup', e => {
-            //     if (e.key === ' ' || e.keyCode === 32) {
-            //         togglePlayback()
-            //     }
-            // })
 
             // 音量控制
             audioFrequency.addEventListener('click', function () {
@@ -698,7 +728,6 @@ function initMusicPlayer() {
             const prevMusic = () => {
                 const songsItem = MusicPlayer.querySelectorAll('.gui-songsItem')
                 if (songsItem.length === 0) return
-                isFunctionTriggered = true
                 currentSongIndex = (currentSongIndex - 1 + songsItem.length) % songsItem.length
                 updateSong(currentSongIndex)
             }
@@ -706,7 +735,6 @@ function initMusicPlayer() {
             const nextMusic = () => {
                 const songsItem = MusicPlayer.querySelectorAll('.gui-songsItem')
                 if (songsItem.length === 0) return
-                isFunctionTriggered = true
                 currentSongIndex = (currentSongIndex + 1) % songsItem.length
                 updateSong(currentSongIndex)
             }
@@ -795,66 +823,7 @@ function initMusicPlayer() {
             }
 
             // 初始加载歌曲列表
-            renderSongList(musicUrl, false)
-
-            // 搜索接口 - 先提交搜索条件，再获取新列表
-            window.handleSearch = async (searchTerm) => {
-                try {
-                    // 第一步：提交搜索关键词
-                    const searchResponse = await fetch(`https://luren.online:2345/proxy/musicSearch?name=${encodeURIComponent(searchTerm)}`, {headers: getOptionalAuthHeaders()});
-                    if (!searchResponse.ok) {
-                        throw new Error(`搜索请求失败: ${searchResponse.status}`);
-                    }
-
-                    // 第二步：获取搜索结果列表
-                    const musicResponse = await fetch('https://luren.online:2345/proxy/music', {headers: getOptionalAuthHeaders()});
-                    if (!musicResponse.ok) {
-                        throw new Error(`获取列表失败: ${musicResponse.status}`);
-                    }
-
-                    const newMusicList = await musicResponse.json();
-
-                    // 清空现有列表
-                    clearSongList();
-
-                    // 渲染新列表
-                    if (newMusicList && newMusicList.length > 0) {
-                        newMusicList.forEach((data, index) => {
-                            const musicId = data.id;
-                            const musicName = data.name;
-                            const artistsname = data.artistsname || (data.ar && data.ar[0]?.name) || '未知艺术家';
-                            const picurl = data.picurl || data.al?.picUrl || 'https://picsum.photos/200/200';
-                            // 使用歌曲ID作为标识符，实际播放时再获取URL
-                            const mp3 = `song:${musicId}`;
-                            const duration = data.musicDuration;
-
-                            playerMusicItem(musicId, mp3, picurl, musicName, artistsname, duration);
-                        });
-
-                        // 绑定事件
-                        const songsItem = MusicPlayer.querySelectorAll('.gui-songsItem');
-                        bindSongEvents(songsItem);
-
-                        // 播放第一首 - 已禁用自动播放
-                        if (songsItem.length > 0) {
-                            currentSongIndex = 0;
-                            updateSong(0);
-                            // playMusic(); - 已禁用搜索后的自动播放
-                            addPlaying();
-                            displayPopup(`搜索完成，找到 ${songsItem.length} 首歌曲`);
-                        }
-
-                        // 新增：触发图片懒加载
-                        lazyLoadImages();
-                    } else {
-                        displayPopup('未找到匹配的歌曲');
-                    }
-
-                } catch (error) {
-                    console.error('搜索过程出错:', error);
-                    displayPopup('搜索失败，请重试');
-                }
-            }
+            renderSongList(musicUrl)
         }
     }
 }
@@ -862,18 +831,6 @@ function initMusicPlayer() {
 // 检查是否需要自动初始化
 if (!window.disableAutoInit) {
     window.addEventListener('DOMContentLoaded', initMusicPlayer);
-}
-// 搜索函数 - 调用播放器内部的搜索处理函数
-function searchMusic() {
-    const name = document.getElementById("searchInput").value.trim();
-    if (!name) {
-        alert('请输入搜索内容');
-        return;
-    }
-    // 调用播放器内部的搜索处理函数
-    window.handleSearch(name);
-    // 清空输入框
-    document.getElementById("searchInput").value = '';
 }
 // 添加异步加载支持
 if (typeof define === 'function' && define.amd) {

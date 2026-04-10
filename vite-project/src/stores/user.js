@@ -49,6 +49,42 @@ function getSavedUserInfo() {
     return null
 }
 
+function clearAllClientCache() {
+    if (typeof window === 'undefined') return
+
+    try {
+        localStorage.clear()
+    } catch (e) {}
+
+    try {
+        sessionStorage.clear()
+    } catch (e) {}
+
+    try {
+        if (typeof caches !== 'undefined' && caches?.keys) {
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {})
+        }
+    } catch (e) {}
+
+    try {
+        if (navigator?.serviceWorker?.getRegistrations) {
+            navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))).catch(() => {})
+        }
+    } catch (e) {}
+
+    try {
+        if (window.indexedDB) {
+            if (indexedDB.databases) {
+                indexedDB.databases().then(dbs => {
+                    dbs.forEach(db => {
+                        if (db?.name) indexedDB.deleteDatabase(db.name)
+                    })
+                }).catch(() => {})
+            }
+        }
+    } catch (e) {}
+}
+
 export const useUserStore = defineStore('user', () => {
     // 响应式数据
     const token = ref(getSavedToken())
@@ -149,6 +185,7 @@ export const useUserStore = defineStore('user', () => {
     // 登出函数
     function logout() {
         clearUserInfo()
+        clearAllClientCache()
         ElMessage.success('已退出登录')
     }
 
