@@ -23,9 +23,9 @@
         class="navgation navgation_close"
     >
       <ul class="point">
-        <li><router-link to="/">首页</router-link></li>
+<!--        <li><router-link to="/">首页</router-link></li>-->
         <li><router-link to="/blog">博客</router-link></li>
-        <!-- <li><router-link to="/music">音乐</router-link></li> -->
+         <li><router-link to="/music">音乐</router-link></li>
         <li><router-link to="/h5tools">玩具箱</router-link></li>
 <!--        <li v-if="isLoggedIn"><router-link to="/voice">语音生成</router-link></li>-->
         <!-- 管理员专用导航 -->
