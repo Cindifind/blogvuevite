@@ -181,8 +181,43 @@ function initMusicPlayer() {
 
             // 工具函数
             const setTimeoutPromise = delay => new Promise(resolve => setTimeout(resolve, delay))
-            const playMusic = () => guiMusicAudio.play().catch(error => console.warn(`浏览器默认限制了自动播放：${error}`))
+            const playMusic = () => guiMusicAudio.play()
             const pauseMusic = () => guiMusicAudio.pause()
+            let desiredAutoPlay = false
+
+            const waitForPlayable = () => {
+                return new Promise(resolve => {
+                    if (guiMusicAudio.readyState >= 3) return resolve()
+
+                    let settled = false
+                    const cleanup = () => {
+                        guiMusicAudio.removeEventListener('canplay', onReady)
+                        guiMusicAudio.removeEventListener('loadeddata', onReady)
+                        guiMusicAudio.removeEventListener('error', onReady)
+                    }
+                    const onReady = () => {
+                        if (settled) return
+                        settled = true
+                        cleanup()
+                        resolve()
+                    }
+                    guiMusicAudio.addEventListener('canplay', onReady)
+                    guiMusicAudio.addEventListener('loadeddata', onReady)
+                    guiMusicAudio.addEventListener('error', onReady)
+                    setTimeout(onReady, 3000)
+                })
+            }
+
+            const tryPlayMusic = async (reason) => {
+                try {
+                    await playMusic()
+                    addPlaying()
+                } catch (error) {
+                    console.warn(`无法播放（${reason}）：${error}`)
+                    desiredAutoPlay = false
+                    removebePlaying()
+                }
+            }
 
             // 获取DOM元素引用
             const MusicPlayerMain = MusicPlayer.querySelector('.gui-MusicPlayer-Main')
@@ -333,10 +368,20 @@ function initMusicPlayer() {
             // 数据请求函数
             async function fetchData(url, method = 'GET') {
                 try {
-                    const res = await fetch(url, {method})
+                    const res = await fetch(url, {method, headers: getOptionalAuthHeaders()})
                     return await res.json()
                 } catch (error) {
                     throw error
+                }
+            }
+
+            const getOptionalAuthHeaders = () => {
+                try {
+                    const token = localStorage.getItem('userToken')
+                    if (!token) return {}
+                    return {Authorization: `Bearer ${token}`}
+                } catch (e) {
+                    return {}
                 }
             }
 
@@ -468,7 +513,7 @@ function initMusicPlayer() {
 
                 // 通过新接口获取音乐URL
                 try {
-                    const urlResponse = await fetch(`http://luren.online:2345/proxy/getMusicUrl?id=${musicId}`);
+                    const urlResponse = await fetch(`https://luren.online:2345/proxy/getMusicUrl?id=${musicId}`, {headers: getOptionalAuthHeaders()});
                     const urlData = await urlResponse.json();
 
                     if (urlData.code === "200") {
@@ -489,6 +534,11 @@ function initMusicPlayer() {
                 songName.textContent = itemName
                 singer.textContent = itemAuto
 
+                if (desiredAutoPlay) {
+                    await waitForPlayable()
+                    await tryPlayMusic('切歌自动播放')
+                }
+
                 // 加载歌词
                 if (guiLyric) {
                     guiLyric.style.backgroundColor = backgroundColors[bgIndex];
@@ -496,7 +546,7 @@ function initMusicPlayer() {
 
                     // 使用新的歌词接口
                     try {
-                        const lyricResponse = await fetch(`http://luren.online:2345/proxy/getLyric?id=${musicId}`);
+                        const lyricResponse = await fetch(`https://luren.online:2345/proxy/getLyric?id=${musicId}`, {headers: getOptionalAuthHeaders()});
                         const lyricData = await lyricResponse.json();
                         console.log("歌词数据:", lyricData); // 调试信息
 
@@ -609,11 +659,12 @@ function initMusicPlayer() {
                     displayPopup('音乐已暂停')
                     pauseMusic()
                     removebePlaying()
+                    desiredAutoPlay = false
                 } else {
                     if (guiMusicAudio.src) {
                         displayPopup(`正在播放：${songName.textContent}`)
-                        playMusic()
-                        addPlaying()
+                        desiredAutoPlay = true
+                        tryPlayMusic('用户点击播放')
                         isFunctionTriggered = true
                     } else {
                         displayPopup('请先选择歌曲')
@@ -683,14 +734,14 @@ function initMusicPlayer() {
                 if (duration) {
                     const progress = (currentTime / duration) * 100
                     audioProgress.style.width = `${progress}%`
-                    // 自动播放下一首
-                    if (progress >= 100) {
-                        nextMusic()
-                    }
-
                     // 歌词高亮显示
                     highlightLyric();
                 }
+            })
+
+            guiMusicAudio.addEventListener('ended', () => {
+                if (!desiredAutoPlay) return
+                nextMusic()
             })
 
             // 进度条拖动
@@ -750,13 +801,13 @@ function initMusicPlayer() {
             window.handleSearch = async (searchTerm) => {
                 try {
                     // 第一步：提交搜索关键词
-                    const searchResponse = await fetch(`http://luren.online:2345/proxy/musicSearch?name=${encodeURIComponent(searchTerm)}`);
+                    const searchResponse = await fetch(`https://luren.online:2345/proxy/musicSearch?name=${encodeURIComponent(searchTerm)}`, {headers: getOptionalAuthHeaders()});
                     if (!searchResponse.ok) {
                         throw new Error(`搜索请求失败: ${searchResponse.status}`);
                     }
 
                     // 第二步：获取搜索结果列表
-                    const musicResponse = await fetch('http://luren.online:2345/proxy/music');
+                    const musicResponse = await fetch('https://luren.online:2345/proxy/music', {headers: getOptionalAuthHeaders()});
                     if (!musicResponse.ok) {
                         throw new Error(`获取列表失败: ${musicResponse.status}`);
                     }
