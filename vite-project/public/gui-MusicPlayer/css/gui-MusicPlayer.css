@@ -146,7 +146,7 @@
 #gui-MusicPlayer .gui-MusicPlayer-Main,
 .gui-MusicPlayer .gui-MusicPlayer-Main {
     --parentWidth: 350;
-    --numParentHeight: 110;
+    --numParentHeight: 135;
     --playerRadius-1: 8px;
     --parentWidthRemoveParty24: calc(350px - 24px);
     --songPictureWidth: calc(135px - 135px / 2.5 - 5px);
@@ -175,16 +175,12 @@
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-switchPlayer,
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-playerControl li,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-playerControl li,
-#gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-audioFrequency,
-.gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-audioFrequency,
-#gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-playlistBtn,
-.gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-playlistBtn {
-    flex-shrink: 0;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+#gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-audioFrequency,
+.gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-audioFrequency,
+#gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-totalAudioProgress,
+.gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-totalAudioProgress,
+#gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-playlistBtn,
+.gui-MusicPlayer .gui-MusicPlayer-Main .gui-bottomControl .gui-playlistBtn,
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-listOfSongs li,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-listOfSongs li {
     cursor: url(../other/pointer.cur), auto;
@@ -192,18 +188,28 @@
 
 #gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar,
 .gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar {
-    width: 3.5px;
+    width: 0;
+    height: 0;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar-thumb,
 .gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar-thumb {
     background-color: transparent;
-    border-radius: 0;
+    border-radius: transparent;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar-track,
 .gui-MusicPlayer .gui-MusicPlayer-Main ::-webkit-scrollbar-track {
     background-color: transparent;
+}
+
+#gui-MusicPlayer .gui-MusicPlayer-Main,
+.gui-MusicPlayer .gui-MusicPlayer-Main,
+#gui-lyric,
+.gui-music-pop,
+.gui-throughDisplay,
+.gui-lyricHidden {
+    scrollbar-width: none;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main ::selection,
@@ -217,7 +223,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    height: calc(200px);
+    height: calc(135px);
     width: calc(24px);
     display: flex;
     align-items: center;
@@ -243,7 +249,7 @@
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong {
     width: var(--parentWidthRemoveParty24);
-    height: calc(200px);
+    height: calc(135px);
     border-top-right-radius: var(--playerRadius-1);
     border-bottom-right-radius: var(--playerRadius-1);
     background-color: var(--playerColor-1);
@@ -254,7 +260,7 @@
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-songPicture,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-songPicture {
     width: var(--songPictureWidth);
-    height: calc(150px);
+    height: calc(135px);
     position: relative;
     display: flex;
     align-items: center;
@@ -353,8 +359,6 @@
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl {
     display: flex;
     width: var(--rightSideWidth);
-    justify-content: space-between;
-    align-items: center;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl li,
@@ -395,6 +399,7 @@
     width: var(--introduceWidth);
     margin: var(--BoxLeftAndRightMargin);
     text-align: center;
+    line-height: 1.0;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-introduce .gui-songName,
@@ -413,13 +418,15 @@
     color: var(--playerColor-8);
     font-size: 1.5em;
     font-weight: bold;
+    line-height: 1.0;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-introduce .gui-singer,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-introduce .gui-singer {
     font-size: 1em;
-    margin-top: 5px;
+    margin-top: 2px;
     color: var(--playerColor-4);
+    line-height: 1.0;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl,
@@ -430,15 +437,15 @@
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl li,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl li {
-    width: var(--iconControlSize);
-    height: var(--iconControlSize);
+    width: var(--btnSize);
+    height: var(--btnSize);
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl .gui-playbackControl,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl .gui-playbackControl {
     margin: 0 1.5em;
     opacity: 0.5;
-    transition: opacity 0.5s;
+    transition: opacity 0.5;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-topControl .gui-playerControl .gui-playbackControl:hover,
@@ -464,10 +471,8 @@
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-progressBar,
 .gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-progressBar {
-    flex: 1;
-    padding: 0 15px;
-    display: flex;
-    align-items: center;
+    width: 70%;
+    padding: 0 5px;
 }
 
 #gui-MusicPlayer .gui-MusicPlayer-Main .gui-insideSong .gui-musicControl .gui-bottomControl .gui-progressBar .gui-totalAudioProgress,
@@ -620,6 +625,7 @@
     word-break: break-all;
     overflow: hidden;
     display: -webkit-box;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     transition: var(--songTitleNameTransition);
 }
@@ -715,32 +721,49 @@
     --blur-5: blur(5px);
     --text-shadow-1: 1px 1px 1px var(--color-2);
     --transition-1: left 1s ease 0s;
+    --z-index-100: 1809185784;
     --height-1: 1.75em;
     --height-2: -1.75em;
     font-family: '仿宋', 'FangSong', '微软雅黑', 'Microsoft YaHei';
+}
+
+#gui-lyric li,
+.gui-music-pop li,
+.gui-throughDisplay li,
+.gui-lyricHidden li {
+    list-style: none;
+}
+
+#gui-lyric *,
+.gui-music-pop *,
+.gui-throughDisplay *,
+.gui-lyricHidden * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#gui-lyric ::selection,
+.gui-music-pop ::selection,
+.gui-throughDisplay ::selection,
+.gui-lyricHidden ::selection {
+    background-color: var(--color-3);
+    color: var(--color-1);
 }
 
 #gui-lyric {
     --width-100B: 100%;
     position: fixed;
     left: 0;
-    bottom: 3px; /* 调整位置避免被播放器遮挡 */
     width: var(--width-100B);
     height: var(--height-1);
     backdrop-filter: var(--blur-5);
-    overflow: hidden;
+    z-index: var(--z-index-100);
+    overflow-x: hidden;
+    overflow-y: auto;
     transition: all 0.5s;
     cursor: url(../other/default.cur), auto;
-    display: none; /* 默认隐藏 */
-    z-index: 99; /* 设置歌词层级低于导航 */
-}
-
-#gui-lyric.gui-lyricShow {
-    display: block; /* 显示歌词 */
-}
-
-#gui-lyric.gui-lyricHidden {
-    display: none; /* 隐藏歌词 */
 }
 
 #gui-lyric:hover {
@@ -750,13 +773,12 @@
 #gui-lyric .gui-AllLyric-box {
     position: relative;
     width: 100%;
-    height: 100%;
-    overflow: hidden;
+    min-height: 100%;
 }
 
 #gui-lyric .gui-AllLyric-box .gui-ly {
-    padding: 2px 0;
-    width: 100%;
+    position: relative;
+    width: calc(var(--width-100B) - 20%);
     line-height: var(--height-1);
     color: var(--color-1);
     text-align: center;
@@ -767,20 +789,17 @@
     overflow: hidden;
     word-break: break-all;
     white-space: nowrap;
-    opacity: 0.5; /* 默认半透明 */
-    transition: all 0.5s;
-    position: relative; /* 改为相对定位 */
-    left: 0;
-    top: 0;
-    transform: none; /* 移除绝对定位的变换 */
-    display: block; /* 确保歌词项显示 */
+    opacity: 0.55;
+    transition: opacity 0.25s, color 0.25s, transform 0.25s;
+    transform: scale(1);
+    margin: 0 auto;
 }
 
-#gui-lyric .gui-AllLyric-box .gui-ly.gui-currentLyric {
-    opacity: 1; /* 当前歌词完全不透明 */
-    font-size: 1.2em; /* 当前歌词稍大 */
-    color: #ff6b6b; /* 当前歌词使用亮色 */
-    transform: none;
+#gui-lyric .gui-AllLyric-box .gui-currentLyric,
+#gui-lyric .gui-AllLyric-box .gui-textShow {
+    opacity: 1;
+    color: var(--color-3);
+    transform: scale(1.02);
 }
 
 .gui-lyricHidden {
@@ -819,39 +838,4 @@
     border-radius: 3px;
     z-index: var(--z-index-100);
     display: none;
-}
-
-/* 粉色按钮样式 */
-button,
-.gui-MusicPlayer button {
-    padding: 10px 30px;
-    border: none;
-    border-radius: 10px; /* 圆角 */
-    background-color: #ffccdd; /* 深一点的粉色 */
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    /*transition: background-color 0.3s ease, transform 0.2s ease;*/
-}
-
-button:hover,
-.gui-MusicPlayer button:hover {
-    background-color: #fc7b9e; /* 鼠标悬停颜色 */
-    transform: scale(1.05);
-}
-
-#searchInput {
-    width: 200px;
-    height: 15px;
-    padding: 5px;
-    border: none;
-    border-radius: 25px; /* 圆角设计 */
-    background-color: #ffc0cb; /* 粉色系背景色 */
-    box-shadow: 0 0 5px rgba(255, 105, 180, 0.5); /* 粉色光晕效果 */
-    transition: all 0.3s ease;
-}
-
-#src1 {
-    margin-left: -80px;
-    margin-top: 5px;
 }
