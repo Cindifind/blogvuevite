@@ -294,7 +294,7 @@ const toolRules = {
 }
 
 // API配置
-const API_BASE_URL = 'https://luren.online:2345'
+const API_BASE_URL = 'https://muqingxi.com:2345'
 
 // 获取存储的token
 const getToken = () => {

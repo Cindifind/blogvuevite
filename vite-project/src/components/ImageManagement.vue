@@ -129,7 +129,7 @@ const currentImageUrl = ref('')
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 // API基础URL
-const API_BASE_URL = 'https://luren.online:8080'
+const API_BASE_URL = 'https://muqingxi.com:8080'
 
 // 获取图片列表
 const loadImageList = async () => {

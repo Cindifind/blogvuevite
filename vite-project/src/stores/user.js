@@ -108,7 +108,7 @@ export const useUserStore = defineStore('user', () => {
             const emailHash = argon2HashEmail(email)
             console.log('Email hash:', emailHash)
             
-            const getsaltResponse = await fetch(`https://luren.online:2345/proxy/getsalt?email=${encodeURIComponent(email)}&hash=${encodeURIComponent(emailHash)}`)
+            const getsaltResponse = await fetch(`https://muqingxi.com:2345/proxy/getsalt?email=${encodeURIComponent(email)}&hash=${encodeURIComponent(emailHash)}`)
             const getsaltData = await getsaltResponse.json()
             
             if (!getsaltResponse.ok || getsaltData.code !== 200) {
@@ -128,7 +128,7 @@ export const useUserStore = defineStore('user', () => {
             params.append('emailHash', emailHash)
             params.append('password', passwordHash)
             // const response = await fetch('http://localhost:8080/login', {
-            const response = await fetch('https://luren.online:2345/proxy/login', {
+            const response = await fetch('https://muqingxi.com:2345/proxy/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

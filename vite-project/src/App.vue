@@ -17,7 +17,7 @@
       <WeatherWidget/>
       <!-- <div id="gui-MusicPlayer"
            data-themeColor="gui-girlPink"
-           data-localMusic="http://luren.online:2345/proxy/music"
+           data-localMusic="http://muqingxi.com:2345/proxy/music"
            data-fadeOutAutoplay>
       </div> -->
     </div>

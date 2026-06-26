@@ -445,7 +445,7 @@ function initMusicPlayer() {
                     let res
                     const cachedPlaylistId = loadCachedPlaylistId()
                     if (cachedPlaylistId) {
-                        const playlistRes = await fetchData(`https://luren.online:2345/proxy/musicList?id=${cachedPlaylistId}`)
+                        const playlistRes = await fetchData(`https://muqingxi.com:2345/proxy/musicList?id=${cachedPlaylistId}`)
                         res = playlistRes && Array.isArray(playlistRes.list) ? playlistRes.list : []
                     } else {
                         res = await fetchData(dataUrl)
@@ -557,7 +557,7 @@ function initMusicPlayer() {
 
                 // 通过新接口获取音乐URL
                 try {
-                    const urlResponse = await fetch(`https://luren.online:2345/proxy/getMusicUrl?id=${musicId}`, {headers: getOptionalAuthHeaders()});
+                    const urlResponse = await fetch(`https://muqingxi.com:2345/proxy/getMusicUrl?id=${musicId}`, {headers: getOptionalAuthHeaders()});
                     const urlData = await urlResponse.json();
 
                     if (urlData.code === "200") {
@@ -590,7 +590,7 @@ function initMusicPlayer() {
 
                     // 使用新的歌词接口
                     try {
-                        const lyricResponse = await fetch(`https://luren.online:2345/proxy/getLyric?id=${musicId}`, {headers: getOptionalAuthHeaders()});
+                        const lyricResponse = await fetch(`https://muqingxi.com:2345/proxy/getLyric?id=${musicId}`, {headers: getOptionalAuthHeaders()});
                         const lyricData = await lyricResponse.json();
 
                         guiAllLyri.innerHTML = '';

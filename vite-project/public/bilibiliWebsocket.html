@@ -608,7 +608,7 @@
 
             try {
                 // 创建WebSocket连接
-                this.ws = new WebSocket(`ws://luren.online:8080/user-danmu`);
+                this.ws = new WebSocket(`ws://muqingxi.com:8080/user-danmu`);
 
                 this.ws.onopen = () => {
                     this.isConnected = true;
@@ -686,7 +686,7 @@
             }
 
             // 调用后端API发送消息
-            fetch('https://luren.online:2345/proxy/bilibili/sendMessage', {
+            fetch('https://muqingxi.com:2345/proxy/bilibili/sendMessage', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

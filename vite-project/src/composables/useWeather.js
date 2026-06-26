@@ -14,7 +14,7 @@ export function fetchWeatherData() {
       <div class="loading-spinner"></div>
     `
 
-        fetch('http://v4.luren.online/api/getWeather')
+        fetch('http://v4.muqingxi.com/api/getWeather')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP错误: ${response.status}`)

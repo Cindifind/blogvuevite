@@ -245,7 +245,7 @@ const formatTime = (seconds) => {
   const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
-const API_BASE_URL = 'https://luren.online:2345'
+const API_BASE_URL = 'https://muqingxi.com:2345'
 
 const parseLrc = (lrcText) => {
   if (!lrcText || typeof lrcText !== 'string') return []

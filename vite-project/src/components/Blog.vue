@@ -428,7 +428,7 @@ const loadArticles = async (page = 0) => {
   error.value = null
   
   try {
-    const response = await fetch(`https://luren.online:2345/proxy/page?pageNum=${page}&pageSize=${pageSize}`)
+    const response = await fetch(`https://muqingxi.com:2345/proxy/page?pageNum=${page}&pageSize=${pageSize}`)
     
     if (!response.ok) {
       throw new Error(`HTTP错误: ${response.status}`)
@@ -600,7 +600,7 @@ const getImageUrl = (filename) => {
   if (!filename) {
     return '/default-article-image.jpg'; // 默认封面图片
   }
-  return `https://luren.online:2345/proxy/image?filename=${filename}`;
+  return `https://muqingxi.com:2345/proxy/image?filename=${filename}`;
 }
 
 // 方法：处理图片加载错误
@@ -659,7 +659,7 @@ const loadMarkdownContent = async (filename) => {
   }
   
   try {
-    const url = `https://luren.online:2345/proxy/md?filename=${encodeURIComponent(filename)}`
+    const url = `https://muqingxi.com:2345/proxy/md?filename=${encodeURIComponent(filename)}`
     console.log('发送请求到:', url) // 添加调试日志
     
     const response = await fetch(url)
@@ -683,7 +683,7 @@ const loadMarkdownContent = async (filename) => {
 const likeArticle = async (timestamp) => {
   try {
     const token = localStorage.getItem('userToken')
-    const response = await fetch('https://luren.online:2345/proxy/likeArticle', {
+    const response = await fetch('https://muqingxi.com:2345/proxy/likeArticle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -813,7 +813,7 @@ const addArticle = async () => {
     formData.append('email', email)  // 匹配API参数
     
     const token = localStorage.getItem('userToken')
-    const response = await fetch('https://luren.online:2345/proxy/upload', {
+    const response = await fetch('https://muqingxi.com:2345/proxy/upload', {
       method: 'POST',
       headers: {
         'Authorization': token
@@ -850,7 +850,7 @@ const deleteArticle = async (timestamp) => {
     })
     
     const token = localStorage.getItem('userToken')
-    const response = await fetch(`https://luren.online:2345/proxy/delete?timestamp=${timestamp}`, {
+    const response = await fetch(`https://muqingxi.com:2345/proxy/delete?timestamp=${timestamp}`, {
       method: 'GET',
       headers: {
         'Authorization': token
@@ -897,7 +897,7 @@ const closeImageManagementContainer = () => {
 const loadImages = async () => {
   try {
     const token = localStorage.getItem('userToken')
-    const response = await fetch('https://luren.online:2345/proxy/getMdImageList', {
+    const response = await fetch('https://muqingxi.com:2345/proxy/getMdImageList', {
       headers: {
         'Authorization': token
       }
@@ -928,7 +928,7 @@ const deleteImage = async (filename) => {
     const formData = new FormData()
     formData.append('mdImageName', filename)
     
-    const response = await fetch('https://luren.online:2345/proxy/deleteMdImage', {
+    const response = await fetch('https://muqingxi.com:2345/proxy/deleteMdImage', {
       method: 'POST',
       headers: {
         'Authorization': token
@@ -956,7 +956,7 @@ const deleteImage = async (filename) => {
 // 管理员功能：查看图片
 const viewImage = (filename) => {
   currentImageName.value = filename
-  currentImageUrl.value = `https://luren.online:2345/proxy/image?filename=${filename}`
+  currentImageUrl.value = `https://muqingxi.com:2345/proxy/image?filename=${filename}`
   showImageModal.value = true
 }
 
@@ -1015,7 +1015,7 @@ const uploadImages = async () => {
     formData.append('image', preview.file)
     
     const token = localStorage.getItem('userToken')
-    const response = await fetch('https://luren.online:2345/proxy/mdImage', {
+    const response = await fetch('https://muqingxi.com:2345/proxy/mdImage', {
       method: 'POST',
       headers: {
         'authorization': token  // 改为小写，匹配Java示例
@@ -1053,7 +1053,7 @@ const cleanInvalidFiles = async () => {
     
     // 1. 获取所有服务列表
     const token = localStorage.getItem('userToken')
-    const servicesResponse = await fetch('https://luren.online:2345/cline', {
+    const servicesResponse = await fetch('https://muqingxi.com:2345/cline', {
       method: 'GET',
       headers: {
         'authorization': token
