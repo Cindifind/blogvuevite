@@ -436,6 +436,120 @@ function initMusicPlayer() {
                 }
             }
 
+            // ===== ProtoBuf 解码工具函数 =====
+            // Base64 → Uint8Array
+            const base64ToBytes = (base64) => {
+                const binaryStr = atob(base64)
+                const bytes = new Uint8Array(binaryStr.length)
+                for (let i = 0; i < binaryStr.length; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i)
+                }
+                return bytes
+            }
+
+            // GZIP 解压（使用浏览器 DecompressionStream API）
+            const gunzipAsync = async (compressedData) => {
+                const ds = new DecompressionStream('gzip')
+                const writer = ds.writable.getWriter()
+                const reader = ds.readable.getReader()
+                writer.write(compressedData).then(() => writer.close())
+                const chunks = []
+                while (true) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    chunks.push(value)
+                }
+                const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+                const result = new Uint8Array(totalLength)
+                let offset = 0
+                for (const chunk of chunks) {
+                    result.set(chunk, offset)
+                    offset += chunk.length
+                }
+                return result
+            }
+
+            // 读取 protobuf varint
+            const readVarint = (buf, pos) => {
+                let result = 0, shift = 0, b
+                do {
+                    b = buf[pos++]
+                    result |= (b & 0x7F) << shift
+                    shift += 7
+                } while (b & 0x80)
+                return [result, pos]
+            }
+
+            // 读取 protobuf length-delimited 字段
+            const readBytes = (buf, pos) => {
+                const [len, newPos] = readVarint(buf, pos)
+                return [buf.slice(newPos, newPos + len), newPos + len]
+            }
+
+            // 解码单条 MusicInfo（proto wire format）
+            // field 1=id, 2=name, 3=artists_name, 4=picurl, 5=music_duration
+            const decodeMusicInfo = (bytes) => {
+                const item = { id: '', name: '', artists_name: '', picurl: '', music_duration: '' }
+                let pos = 0
+                while (pos < bytes.length) {
+                    const [tag, afterTag] = readVarint(bytes, pos)
+                    const fieldNum = tag >> 3
+                    const wireType = tag & 0x7
+                    if (wireType === 2) {
+                        const [fieldBytes, nextPos] = readBytes(bytes, afterTag)
+                        const str = new TextDecoder().decode(fieldBytes)
+                        if (fieldNum === 1) item.id = str
+                        else if (fieldNum === 2) item.name = str
+                        else if (fieldNum === 3) item.artists_name = str
+                        else if (fieldNum === 4) item.picurl = str
+                        else if (fieldNum === 5) item.music_duration = str
+                        pos = nextPos
+                    } else {
+                        pos = afterTag
+                    }
+                }
+                return item
+            }
+
+            // 解码 MusicInfoList（proto wire format）
+            // field 1=items (repeated MusicInfo)
+            const decodeMusicInfoList = (bytes) => {
+                const items = []
+                let pos = 0
+                while (pos < bytes.length) {
+                    const [tag, afterTag] = readVarint(bytes, pos)
+                    const fieldNum = tag >> 3
+                    const wireType = tag & 0x7
+                    if (fieldNum === 1 && wireType === 2) {
+                        const [itemBytes, nextPos] = readBytes(bytes, afterTag)
+                        items.push(decodeMusicInfo(itemBytes))
+                        pos = nextPos
+                    } else {
+                        pos = afterTag
+                    }
+                }
+                return items
+            }
+
+            // 完整解码流程：Base64 → GZIP解压 → ProtoBuf解码
+            const decodeProtoMusicList = async (compressedBase64) => {
+                if (!compressedBase64) return []
+                const gzippedBytes = base64ToBytes(compressedBase64)
+                const protoBytes = await gunzipAsync(gzippedBytes)
+                const items = decodeMusicInfoList(protoBytes)
+                // 转换为与现有代码兼容的字段名
+                return items.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    artistsname: item.artists_name,
+                    artists: item.artists_name,
+                    artist: item.artists_name,
+                    picurl: item.picurl,
+                    musicDuration: item.music_duration
+                }))
+            }
+            // ===== ProtoBuf 解码工具函数结束 =====
+
             const renderSongList = async (dataUrl) => {
                 try {
                     clearSongList()
@@ -445,8 +559,13 @@ function initMusicPlayer() {
                     let res
                     const cachedPlaylistId = loadCachedPlaylistId()
                     if (cachedPlaylistId) {
-                        const playlistRes = await fetchData(`https://muqingxi.com:2345/proxy/musicList?id=${cachedPlaylistId}`)
-                        res = playlistRes && Array.isArray(playlistRes.list) ? playlistRes.list : []
+                        // 使用 ProtoBuf 接口获取歌单
+                        const playlistRes = await fetchData(`https://muqingxi.com:2345/proxy/musicListProto?id=${cachedPlaylistId}`)
+                        if (playlistRes && playlistRes.code === 200 && playlistRes.list) {
+                            res = await decodeProtoMusicList(playlistRes.list)
+                        } else {
+                            res = []
+                        }
                     } else {
                         res = await fetchData(dataUrl)
                         if (interfaceAndLocal === null && guiSongList !== null) {
@@ -484,7 +603,7 @@ function initMusicPlayer() {
                                     ? data.duration !== undefined
                                         ? convertTime(data.duration)
                                         : millisecondConversion(data.dt)
-                                    : normalizeDurationText(data.musicDuration)
+                                    : normalizeDurationText(data.musicDuration || data.duration || data.dt || 0)
                             playerMusicItem(musicId, mp3, picurl, musicName, artistsname, duration)
                         })
                     )

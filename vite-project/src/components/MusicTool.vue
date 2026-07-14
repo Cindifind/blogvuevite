@@ -5,6 +5,7 @@ import { Search, InfoFilled, Document, VideoPlay, VideoPause, List, Refresh, Arr
 import VolumeIcons from './VolumeIcons.vue'
 import { useAuth } from '../composables/useAuth'
 import SongList from './SongList.vue'
+import { decodeMusicInfoList } from '../utils/protoMusic'
 
 // 使用用户认证
 const { isLoggedIn, token } = useAuth()
@@ -625,7 +626,7 @@ const confirmDownload = async () => {
   }
 }
 
-// 获取歌单
+// 获取歌单（使用 ProtoBuf 接口）
 const searchByPlaylist = async () => {
   if (!playlistId.value.trim()) {
     ElMessage.warning('请输入歌单ID')
@@ -634,32 +635,38 @@ const searchByPlaylist = async () => {
 
   loadingPlaylist.value = true
   try {
-    // 直接调用新的API接口获取歌单信息
-    const response = await fetch(`${API_BASE_URL}/proxy/musicList?id=${playlistId.value}`, {
+    const response = await fetch(`${API_BASE_URL}/proxy/musicListProto?id=${playlistId.value}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
-    
+
     const data = await response.json()
-    
+
     // 使用统一错误处理
     if (!handleApiError(data, '获取歌单失败')) {
       return
     }
-    
-    if (data.list && data.list.length > 0) {
-      playlist.value = data.list || []
-      selectedSongs.value = []
-      // 保存到对应标签页的歌单结果
-      tabPlaylistResults.value.playlist = [...playlist.value]
-      currentPlaylist.value = [...playlist.value]
-      currentIndex.value = 0
-      storePluginPlaylistId(playlistId.value)
-      updateGlobalPlayerPlaylist(currentPlaylist.value)
-      ElMessage.success(`获取歌单成功，共 ${playlist.value.length} 首歌曲`)
+
+    if (data.list) {
+      // data.list 是 GZIP+Base64 压缩的 protobuf 数据，需要解码
+      const songs = await decodeMusicInfoList(data.list)
+
+      if (songs.length > 0) {
+        playlist.value = songs
+        selectedSongs.value = []
+        tabPlaylistResults.value.playlist = [...playlist.value]
+        currentPlaylist.value = [...playlist.value]
+        currentIndex.value = 0
+        storePluginPlaylistId(playlistId.value)
+        updateGlobalPlayerPlaylist(currentPlaylist.value)
+        ElMessage.success(`获取歌单成功，共 ${playlist.value.length} 首歌曲（ProtoBuf）`)
+      } else {
+        playlist.value = []
+        ElMessage.warning('歌单为空或解析失败')
+      }
     } else {
       playlist.value = []
-      ElMessage.warning('歌单为空或获取失败')
+      ElMessage.warning('歌单数据为空')
     }
   } catch (error) {
     console.error('获取歌单失败:', error)
