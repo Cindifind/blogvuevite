@@ -6,6 +6,7 @@ import VolumeIcons from './VolumeIcons.vue'
 import { useAuth } from '../composables/useAuth'
 import SongList from './SongList.vue'
 import { decodeMusicInfoList } from '../utils/protoMusic'
+import { authFetch } from '../utils/api'
 
 // 使用用户认证
 const { isLoggedIn, token } = useAuth()
@@ -312,7 +313,7 @@ const fetchLyricForSong = async (songId) => {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/getLyric?id=${songId}`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/getLyric?id=${songId}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -336,20 +337,14 @@ const updateFixedPlayerHeightVar = () => {
   document.documentElement.style.setProperty('--musictool-fixed-player-height', `${height}px`)
 }
 
-// 动态获取API请求头
-const getApiHeaders = () => {
-  const userToken = localStorage.getItem('userToken')
-  return {
-    'authorization': userToken || ''
-  }
-}
+// 动态获取API请求头（authFetch 自动处理认证，此函数仅保留兼容）
+const getApiHeaders = () => ({})
 
 // 统一的API错误处理函数
 const handleApiError = (data, defaultMessage = '操作失败') => {
   if (data.code === 403) {
-    ElMessage.error('用户不存在或未登录，请先登录')
-    // 可以在这里添加跳转到登录页面的逻辑
-    // router.push('/login')
+    // authFetch 已自动尝试刷新 token，此处仅记录
+    console.warn('API 返回 403，已尝试自动刷新 token')
     return false
   } else if (data.code !== 200) {
     ElMessage.error(data.message || defaultMessage)
@@ -368,7 +363,7 @@ const searchMusic = async (page = 1) => {
   searching.value = true
   try {
     // 直接获取完整搜索结果，包含分页信息
-    const searchResponse = await fetch(`${API_BASE_URL}/proxy/userMusicSearch?name=${encodeURIComponent(searchKeyword.value)}&t=${page - 1}&l=${pageSize.value}`, {
+    const searchResponse = await authFetch(`${API_BASE_URL}/proxy/userMusicSearch?name=${encodeURIComponent(searchKeyword.value)}&t=${page - 1}&l=${pageSize.value}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -420,7 +415,7 @@ const searchBySongId = async () => {
 
   searchingSongId.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/musicListInfo`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/musicListInfo`, {
       method: 'POST',
       headers: {
         ...getApiHeaders(),
@@ -463,7 +458,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
     const level = quality || selectedQuality.value
     
     // 获取音乐URL
-    const response = await fetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -580,7 +575,7 @@ const confirmDownload = async () => {
   
   try {
     // 获取音乐URL
-    const response = await fetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -635,7 +630,7 @@ const searchByPlaylist = async () => {
 
   loadingPlaylist.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/musicListProto?id=${playlistId.value}`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/musicListProto?id=${playlistId.value}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -685,7 +680,7 @@ const getPlaylistInfo = async () => {
 
   loadingPlaylistInfo.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/musicListInfo`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/musicListInfo`, {
       method: 'POST',
       headers: {
         ...getApiHeaders(),
@@ -1121,7 +1116,7 @@ const fetchUserFavoritePlaylist = async () => {
   
   loadingUserPlaylist.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/userMusicList`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/userMusicList`, {
       method: 'GET',
       headers: getApiHeaders()
     })
@@ -1172,7 +1167,7 @@ const favoriteCurrentPlaylist = async () => {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/updateUserMusicList`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/updateUserMusicList`, {
       method: 'POST',
       headers: {
         ...getApiHeaders(),
@@ -1213,7 +1208,7 @@ const deleteFavoritePlaylist = async (id) => {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/proxy/deleteUserMusicList`, {
+    const response = await authFetch(`${API_BASE_URL}/proxy/deleteUserMusicList`, {
       method: 'POST',
       headers: {
         ...getApiHeaders(),

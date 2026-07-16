@@ -311,6 +311,7 @@ import { useAuth } from '../composables/useAuth'
 import { marked } from 'marked'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommentSection from './CommentSection.vue'
+import { authFetch } from '../utils/api'
 
 // 路由相关
 const route = useRoute()
@@ -682,12 +683,10 @@ const loadMarkdownContent = async (filename) => {
 // 方法：点赞文章
 const likeArticle = async (timestamp) => {
   try {
-    const token = localStorage.getItem('userToken')
-    const response = await fetch('https://muqingxi.com:2345/proxy/likeArticle', {
+    const response = await authFetch('https://muqingxi.com:2345/proxy/likeArticle', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ timestamp })
     })
@@ -812,12 +811,8 @@ const addArticle = async () => {
     }
     formData.append('email', email)  // 匹配API参数
     
-    const token = localStorage.getItem('userToken')
-    const response = await fetch('https://muqingxi.com:2345/proxy/upload', {
+    const response = await authFetch('https://muqingxi.com:2345/proxy/upload', {
       method: 'POST',
-      headers: {
-        'Authorization': token
-      },
       body: formData
     })
     
@@ -849,12 +844,8 @@ const deleteArticle = async (timestamp) => {
       type: 'warning'
     })
     
-    const token = localStorage.getItem('userToken')
-    const response = await fetch(`https://muqingxi.com:2345/proxy/delete?timestamp=${timestamp}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': token
-      }
+    const response = await authFetch(`https://muqingxi.com:2345/proxy/delete?timestamp=${timestamp}`, {
+      method: 'GET'
     })
     
     if (response.ok) {
@@ -896,12 +887,7 @@ const closeImageManagementContainer = () => {
 // 管理员功能：加载图片列表
 const loadImages = async () => {
   try {
-    const token = localStorage.getItem('userToken')
-    const response = await fetch('https://muqingxi.com:2345/proxy/getMdImageList', {
-      headers: {
-        'Authorization': token
-      }
-    })
+    const response = await authFetch('https://muqingxi.com:2345/proxy/getMdImageList')
     if (response.ok) {
       const data = await response.json()
       if (data.code === 200) {
@@ -923,16 +909,12 @@ const deleteImage = async (filename) => {
   }
   
   try {
-    const token = localStorage.getItem('userToken')
     // 使用FormData或URLSearchParams发送请求参数
     const formData = new FormData()
     formData.append('mdImageName', filename)
     
-    const response = await fetch('https://muqingxi.com:2345/proxy/deleteMdImage', {
+    const response = await authFetch('https://muqingxi.com:2345/proxy/deleteMdImage', {
       method: 'POST',
-      headers: {
-        'Authorization': token
-      },
       body: formData
     })
     
@@ -1014,12 +996,8 @@ const uploadImages = async () => {
     const formData = new FormData()
     formData.append('image', preview.file)
     
-    const token = localStorage.getItem('userToken')
-    const response = await fetch('https://muqingxi.com:2345/proxy/mdImage', {
+    const response = await authFetch('https://muqingxi.com:2345/proxy/mdImage', {
       method: 'POST',
-      headers: {
-        'authorization': token  // 改为小写，匹配Java示例
-      },
       body: formData
     })
     
@@ -1052,12 +1030,8 @@ const cleanInvalidFiles = async () => {
     ElMessage.info('开始获取服务列表...')
     
     // 1. 获取所有服务列表
-    const token = localStorage.getItem('userToken')
-    const servicesResponse = await fetch('https://muqingxi.com:2345/cline', {
-      method: 'GET',
-      headers: {
-        'authorization': token
-      }
+    const servicesResponse = await authFetch('https://muqingxi.com:2345/cline', {
+      method: 'GET'
     })
     
     if (!servicesResponse.ok) {
@@ -1087,11 +1061,8 @@ const cleanInvalidFiles = async () => {
         const cleanUrl = `${service.address}`
         console.log(`正在清理: ${cleanUrl}`)
         
-        const cleanResponse = await fetch(cleanUrl, {
-          method: 'GET',
-          headers: {
-            'authorization': token
-          }
+        const cleanResponse = await authFetch(cleanUrl, {
+          method: 'GET'
         })
         
         if (cleanResponse.ok) {

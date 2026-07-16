@@ -105,6 +105,7 @@
 import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuth} from '../composables/useAuth'
+import { authFetch } from '../utils/api'
 
 // 使用路由和认证
 const router = useRouter()
@@ -233,11 +234,10 @@ const generateVoice = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await fetch('https://muqingxi.com:2345/proxy/elysiaVoice', {
+    const response = await authFetch('https://muqingxi.com:2345/proxy/elysiaVoice', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token.value}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({text})
     })

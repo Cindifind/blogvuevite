@@ -213,6 +213,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, View, Edit, Delete } from '@element-plus/icons-vue'
 import { useAuth } from '../composables/useAuth'
+import { authFetch } from '../utils/api'
 
 // 认证与管理员判断（复用 H5Tools 的写法风格）
 const { isLoggedIn, userInfo } = useAuth()
@@ -255,21 +256,11 @@ const apiRules = {
 
 // 基础配置与通用请求
 const API_BASE_URL = 'https://muqingxi.com:2345'
-const getToken = () => localStorage.getItem('userToken')
 
 const request = async (url, options = {}, requireAuth = false) => {
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-
-    if (requireAuth) {
-      const token = getToken()
-      if (token) headers['Authorization'] = `Bearer ${token}`
-    }
-
-    const response = await fetch(url, { headers, ...options })
+    const fetchFn = requireAuth ? authFetch : fetch
+    const response = await fetchFn(url, options)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     return await response.json()
   } catch (error) {

@@ -240,6 +240,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, Edit, Delete } from '@element-plus/icons-vue'
 import { useAuth } from '../composables/useAuth'
 import { getCachedFavicon } from '../utils/iconUtils'
+import { authFetch } from '../utils/api'
 
 // 使用认证
 const { isLoggedIn } = useAuth()
@@ -296,38 +297,13 @@ const toolRules = {
 // API配置
 const API_BASE_URL = 'https://muqingxi.com:2345'
 
-// 获取存储的token
-const getToken = () => {
-  return localStorage.getItem('userToken')
-}
-
 // 通用请求处理函数
 const request = async (url, options = {}, requireAuth = false) => {
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-
-    // 如果需要认证，添加Authorization头
-    if (requireAuth) {
-      const token = getToken()
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-    }
-
-    const response = await fetch(url, {
-      headers,
-      ...options
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    return data
+    const fetchFn = requireAuth ? authFetch : fetch
+    const response = await fetchFn(url, options)
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    return await response.json()
   } catch (error) {
     console.error('API请求失败:', error)
     throw error

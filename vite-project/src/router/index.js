@@ -89,7 +89,7 @@ router.beforeEach((to, from, next) => {
     // 检查是否需要登录的路由
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
-    const isLoggedIn = !!localStorage.getItem('userToken');
+    const isLoggedIn = !!localStorage.getItem('accessToken');
     
     // 获取用户信息
     let userInfo = null;

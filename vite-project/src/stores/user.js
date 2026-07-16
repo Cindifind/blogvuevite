@@ -30,9 +30,14 @@ async function initWasm() {
     }
 }
 
-// 从 localStorage 获取 token（辅助函数）
+// 从 localStorage 获取 accessToken（辅助函数）
 function getSavedToken() {
-    return localStorage.getItem('userToken')
+    return localStorage.getItem('accessToken')
+}
+
+// 从 localStorage 获取 refreshToken（辅助函数）
+function getSavedRefreshToken() {
+    return localStorage.getItem('refreshToken')
 }
 
 // 从 localStorage 获取用户信息（辅助函数）
@@ -88,8 +93,10 @@ function clearAllClientCache() {
 export const useUserStore = defineStore('user', () => {
     // 响应式数据
     const token = ref(getSavedToken())
+    const refreshToken = ref(getSavedRefreshToken())
     const userInfo = ref(getSavedUserInfo())
     const isLoading = ref(false)
+    const isRefreshing = ref(false)
 
     // 计算属性：是否已登录
     const isLoggedIn = computed(() => !!token.value)
@@ -139,8 +146,8 @@ export const useUserStore = defineStore('user', () => {
             const data = await response.json()
 
             if (response.ok && data.code === 200) {
-                // 登录成功，分别保存token和用户信息
-                const userToken = data.data.token
+                // 登录成功，分别保存accessToken和用户信息
+                const userToken = data.data.accessToken
                 const userInformation = {
                     email: data.data.email || email,
                     name: data.data.name,
@@ -156,14 +163,15 @@ export const useUserStore = defineStore('user', () => {
                 userInfo.value = userInformation
 
                 // 保存到 localStorage
-                localStorage.setItem('userToken', userToken)
+                localStorage.setItem('accessToken', userToken)
+                localStorage.setItem('refreshToken', data.data.refreshToken || '')
                 localStorage.setItem('userInfo', JSON.stringify(userInformation))
                 
                 console.log('状态更新完成:', { 
                     token: token.value, 
                     userInfo: userInfo.value,
                     localStorage: {
-                        userToken: localStorage.getItem('userToken'),
+                        accessToken: localStorage.getItem('accessToken'),
                         userInfo: localStorage.getItem('userInfo')
                     }
                 })
@@ -182,6 +190,52 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    // 刷新 accessToken
+    async function refreshAccessToken() {
+        const currentRefreshToken = localStorage.getItem('refreshToken')
+        if (!currentRefreshToken) {
+            console.warn('没有 refreshToken，无法刷新')
+            return { success: false, error: '无刷新令牌' }
+        }
+
+        // 防止并发刷新
+        if (isRefreshing.value) {
+            console.log('正在刷新 token，跳过重复请求')
+            return { success: false, error: '正在刷新中' }
+        }
+
+        isRefreshing.value = true
+        try {
+            const response = await fetch('https://muqingxi.com:2345/proxy/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken: currentRefreshToken })
+            })
+            const data = await response.json()
+
+            if (response.ok && data.code === 200) {
+                // 更新 accessToken 和 refreshToken
+                token.value = data.accessToken
+                refreshToken.value = data.refreshToken
+                localStorage.setItem('accessToken', data.accessToken)
+                localStorage.setItem('refreshToken', data.refreshToken)
+                console.log('Token 刷新成功')
+                return { success: true, accessToken: data.accessToken }
+            } else {
+                // 刷新失败，清除登录状态
+                clearUserInfo()
+                ElMessage.error('登录已过期，请重新登录')
+                return { success: false, error: data.message || '刷新失败' }
+            }
+        } catch (error) {
+            console.error('刷新 token 失败:', error)
+            clearUserInfo()
+            return { success: false, error: error.message }
+        } finally {
+            isRefreshing.value = false
+        }
+    }
+
     // 登出函数
     function logout() {
         clearUserInfo()
@@ -191,7 +245,7 @@ export const useUserStore = defineStore('user', () => {
 
     // 更新用户信息
     function setUserInfo(data) {
-        const userToken = data.token
+        const userToken = data.accessToken
         const userInformation = {
             email: data.email,
             name: data.name,
@@ -202,29 +256,37 @@ export const useUserStore = defineStore('user', () => {
 
         // 更新状态
         token.value = userToken
+        if (data.refreshToken) {
+            refreshToken.value = data.refreshToken
+            localStorage.setItem('refreshToken', data.refreshToken)
+        }
         userInfo.value = userInformation
 
         // 保存到 localStorage
-        localStorage.setItem('userToken', userToken)
+        localStorage.setItem('accessToken', userToken)
         localStorage.setItem('userInfo', JSON.stringify(userInformation))
     }
 
     // 清除用户信息
     function clearUserInfo() {
         token.value = null
+        refreshToken.value = null
         userInfo.value = null
-        localStorage.removeItem('userToken')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
         localStorage.removeItem('userInfo')
     }
 
     return {
         token,
+        refreshToken,
         userInfo,
         isLoggedIn,
         isLoading,
         login,
         logout,
         setUserInfo,
-        clearUserInfo
+        clearUserInfo,
+        refreshAccessToken
     }
 })
