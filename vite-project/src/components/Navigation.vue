@@ -265,23 +265,20 @@ const handleClose = () => {
   margin: 0;
 }
 
-/* 用户信息样式 */
 .user-info {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 5px 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  margin: 5px 10px;
 }
 
 .user-avatar {
-  width: 25px !important;
-  height: 25px !important;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   border: 1px solid #fff;
-  display: block !important;
   object-fit: cover;
 }
 
@@ -289,6 +286,7 @@ const handleClose = () => {
   font-family: "Microsoft YaHei", serif;
   color: #686967;
   font-size: 20px;
+  line-height: 25px; /* ✅ 和头像等高 */
 }
 
 .logout-btn {
@@ -299,6 +297,8 @@ const handleClose = () => {
   border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
+  line-height: 1.6;
+  //align-self: center;
 }
 
 </style>

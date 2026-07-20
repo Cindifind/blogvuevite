@@ -1,15 +1,27 @@
 <script setup>
-import { ref, reactive, computed, watch, h, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { ElMessage, ElMessageBox, ElPagination } from 'element-plus'
-import { Search, InfoFilled, Document, VideoPlay, VideoPause, List, Refresh, ArrowLeft, ArrowRight, Star, Delete } from '@element-plus/icons-vue'
+import {ref, reactive, computed, watch, h, onMounted, onBeforeUnmount, nextTick} from 'vue'
+import {ElMessage, ElMessageBox, ElPagination} from 'element-plus'
+import {
+  Search,
+  InfoFilled,
+  Document,
+  VideoPlay,
+  VideoPause,
+  List,
+  Refresh,
+  ArrowLeft,
+  ArrowRight,
+  Star,
+  Delete
+} from '@element-plus/icons-vue'
 import VolumeIcons from './VolumeIcons.vue'
-import { useAuth } from '../composables/useAuth'
+import {useAuth} from '../composables/useAuth'
 import SongList from './SongList.vue'
-import { decodeMusicInfoList } from '../utils/protoMusic'
-import { authFetch } from '../utils/api'
+import {decodeMusicInfoList} from '../utils/protoMusic'
+import {authFetch} from '../utils/api'
 
 // 使用用户认证
-const { isLoggedIn, token } = useAuth()
+const {isLoggedIn, token} = useAuth()
 
 // 用户收藏歌单相关
 const userPlaylistIds = ref([])
@@ -45,13 +57,13 @@ const selectedSongs = ref([])
 // 音质选择相关
 const selectedQuality = ref('standard')
 const qualityOptions = [
-  { label: '标准音质', value: 'standard' },
-  { label: '极高音质', value: 'exhigh' },
-  { label: '无损音质', value: 'lossless' },
-  { label: 'Hi-Res音质', value: 'hires' },
-  { label: '臻品音效', value: 'jyeffect' },
-  { label: '天空音质', value: 'sky' },
-  { label: '大师音质', value: 'jymaster' }
+  {label: '标准音质', value: 'standard'},
+  {label: '极高音质', value: 'exhigh'},
+  {label: '无损音质', value: 'lossless'},
+  {label: 'Hi-Res音质', value: 'hires'},
+  {label: '臻品音效', value: 'jyeffect'},
+  {label: '天空音质', value: 'sky'},
+  {label: '大师音质', value: 'jymaster'}
 ]
 
 // 下载对话框相关
@@ -78,13 +90,13 @@ const isPlayerOpen = ref(true)
 const isPlaylistOpen = ref(false)
 const selectedTheme = ref('gui-girlPink')
 const themeOptions = [
-  { label: '原版紫', value: 'gui-original' },
-  { label: '天空蓝', value: 'gui-sky' },
-  { label: '橙色', value: 'gui-orange' },
-  { label: '深绿', value: 'gui-darkGreen' },
-  { label: '酒红', value: 'gui-wineRed' },
-  { label: '少女粉', value: 'gui-girlPink' }
-] 
+  {label: '原版紫', value: 'gui-original'},
+  {label: '天空蓝', value: 'gui-sky'},
+  {label: '橙色', value: 'gui-orange'},
+  {label: '深绿', value: 'gui-darkGreen'},
+  {label: '酒红', value: 'gui-wineRed'},
+  {label: '少女粉', value: 'gui-girlPink'}
+]
 const THEME_STORAGE_KEY = 'musictool-theme'
 
 const getStoredTheme = () => {
@@ -101,7 +113,8 @@ const getStoredTheme = () => {
 const setStoredTheme = (themeClass) => {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, themeClass)
-  } catch (e) {}
+  } catch (e) {
+  }
 }
 
 const PLUGIN_PLAYLIST_ID_KEY = 'musictool-plugin-playlist'
@@ -111,7 +124,8 @@ const storePluginPlaylistId = (id) => {
   if (!v) return
   try {
     localStorage.setItem(PLUGIN_PLAYLIST_ID_KEY, v)
-  } catch (e) {}
+  } catch (e) {
+  }
 }
 
 const loadPluginPlaylistId = () => {
@@ -227,9 +241,9 @@ const activeLyricIndex = ref(-1)
 // 播放模式相关
 const playMode = ref('sequence') // sequence: 顺序播放, loop: 循环播放, random: 随机播放
 const playModeOptions = [
-  { label: '顺序播放', value: 'sequence', icon: 'List' },
-  { label: '循环播放', value: 'loop', icon: 'Refresh' },
-  { label: '随机播放', value: 'random', icon: 'Shuffle' }
+  {label: '顺序播放', value: 'sequence', icon: 'List'},
+  {label: '循环播放', value: 'loop', icon: 'Refresh'},
+  {label: '随机播放', value: 'random', icon: 'Shuffle'}
 ]
 const currentPlaylist = ref([]) // 当前播放列表
 const currentIndex = ref(0) // 当前播放索引
@@ -271,7 +285,7 @@ const parseLrc = (lrcText) => {
       const seconds = Number(match[2])
       const fraction = match[3] ? Number(match[3]) : 0
       const time = minutes * 60 + seconds + (match[3] ? fraction / (match[3].length === 3 ? 1000 : 100) : 0)
-      result.push({ time, text })
+      result.push({time, text})
     })
   })
 
@@ -300,7 +314,7 @@ const updateActiveLyric = () => {
     const container = floatingLyricContent.value
     if (!container) return
     const activeEl = container.querySelector('.floating-lyric-line.is-active')
-    activeEl?.scrollIntoView({ block: 'center' })
+    activeEl?.scrollIntoView({block: 'center'})
   })
 }
 
@@ -367,27 +381,27 @@ const searchMusic = async (page = 1) => {
       method: 'GET',
       headers: getApiHeaders()
     })
-    
+
     const searchData = await searchResponse.json()
-    
+
     // 使用统一错误处理
     if (!handleApiError(searchData, '搜索失败')) {
       return
     }
-    
+
     if (searchData.lists && searchData.lists.length > 0) {
       // 直接使用返回的歌曲数据
       keywordResults.value = searchData.lists || []
       searchResults.value = searchData.lists || []
-      
+
       // 设置分页信息
       totalSongs.value = searchData.songCount || 0
       totalPages.value = Math.ceil(totalSongs.value / pageSize.value)
       currentPage.value = page
-      
+
       // 保存到对应标签页的搜索结果
       tabSearchResults.value.keyword = [...keywordResults.value]
-      
+
       ElMessage.success(`找到 ${searchData.songCount} 首歌曲，当前显示第 ${page} 页，共 ${totalPages.value} 页`)
     } else {
       keywordResults.value = []
@@ -423,13 +437,13 @@ const searchBySongId = async () => {
       },
       body: JSON.stringify([songId.value])
     })
-    
+
     const data = await response.json()
-    
+
     if (!handleApiError(data, '获取歌曲信息失败')) {
       return
     }
-    
+
     if (data.list && data.list.length > 0) {
       searchResults.value = data.list
       songIdResults.value = data.list // 保存到单曲ID搜索结果
@@ -456,20 +470,20 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
   try {
     // 使用传入的音质或当前选择的音质
     const level = quality || selectedQuality.value
-    
+
     // 获取音乐URL
     const response = await authFetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
-    
+
     const data = await response.json()
-    
+
     // 使用统一错误处理
     if (!handleApiError(data, '获取播放链接失败')) {
       return
     }
-    
+
     if (data.url) {
       // 设置当前播放歌曲，确保专辑图片正确显示
       currentSong.value = {
@@ -478,7 +492,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
         artist: song.artistsname || song.artists || (song.ar && song.ar[0]?.name) || '未知艺术家'
       }
       currentMusicUrl.value = data.url
-      
+
       // 如果不是从播放列表播放，则更新播放列表
       if (!fromPlaylist) {
         // 从搜索结果或歌单中设置播放列表
@@ -493,7 +507,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
           currentIndex.value = 0
         }
       }
-      
+
       // 自动播放
       const ensureAudio = async () => {
         if (audioPlayer.value) return audioPlayer.value
@@ -533,7 +547,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
           syncGlobalPlayerPlayingUI(false)
         })
       }, 100)
-      
+
       // 显示当前音质信息
       const qualityLabel = qualityOptions.find(q => q.value === level)?.label || level
       ElMessage.success(`开始播放: ${song.name} (${qualityLabel})`)
@@ -551,7 +565,7 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
 // 下载音乐
 const downloadMusic = async (song) => {
   console.log('下载音乐函数被调用:', song.name)
-  
+
   // 设置要下载的歌曲信息并显示对话框
   downloadingSong.value = song
   downloadQuality.value = selectedQuality.value || 'standard'
@@ -567,45 +581,45 @@ const handleDownloadDialogClose = () => {
 // 确认下载
 const confirmDownload = async () => {
   if (!downloadingSong.value) return
-  
+
   const song = downloadingSong.value
   const level = downloadQuality.value
-  
+
   console.log('开始下载，音质:', level)
-  
+
   try {
     // 获取音乐URL
     const response = await authFetch(`${API_BASE_URL}/proxy/musicUrl?id=${song.id}&level=${level}`, {
       method: 'GET',
       headers: getApiHeaders()
     })
-    
+
     const data = await response.json()
-    
+
     // 使用统一错误处理
     if (!handleApiError(data, '获取下载链接失败')) {
       return
     }
-    
+
     if (data.url) {
       // 使用fetch获取文件数据，然后创建blob下载
       const fileResponse = await fetch(data.url)
       const blob = await fileResponse.blob()
-      
+
       // 创建下载链接
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
       link.download = `${song.name} - ${song.artistsname || song.artists || song.artist || '未知艺术家'}.mp3`
-      
+
       // 触发下载
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       // 清理URL对象
       window.URL.revokeObjectURL(url)
-      
+
       const qualityLabel = qualityOptions.find(q => q.value === level)?.label || level
       ElMessage.success(`开始下载: ${song.name} (${qualityLabel})`)
     } else {
@@ -688,14 +702,14 @@ const getPlaylistInfo = async () => {
       },
       body: JSON.stringify(selectedSongs.value)
     })
-    
+
     const data = await response.json()
-    
+
     // 使用统一错误处理
     if (!handleApiError(data, '获取歌单信息失败')) {
       return
     }
-    
+
     // 显示歌单信息
     const infoText = data.list.map(song => `${song.name} - ${song.artistsname || song.artists || song.artist || '未知艺术家'}`).join('\n')
     ElMessageBox.alert(infoText, '选中歌曲信息', {
@@ -762,7 +776,7 @@ const onLoadedMetadata = () => {
 // 自定义播放器控制方法
 const togglePlayPause = () => {
   if (!audioPlayer.value || !canPlay.value) return
-  
+
   if (isPlaying.value) {
     audioPlayer.value.pause()
     isPlaying.value = false
@@ -782,7 +796,7 @@ const togglePlayPause = () => {
 
 const seekTo = (event) => {
   if (!audioPlayer.value || !canPlay.value) return
-  
+
   const target = event?.currentTarget || progressBar.value
   if (!target) return
 
@@ -790,14 +804,14 @@ const seekTo = (event) => {
   const clickX = event.clientX - rect.left
   const percentage = clickX / rect.width
   const newTime = percentage * duration.value
-  
+
   audioPlayer.value.currentTime = newTime
   currentTime.value = newTime
 }
 
 const toggleMute = () => {
   if (!audioPlayer.value) return
-  
+
   if (isMuted.value) {
     audioPlayer.value.volume = volume.value
     isMuted.value = false
@@ -813,7 +827,7 @@ const toggleVolumeSlider = () => {
 
 const updateVolume = () => {
   if (!audioPlayer.value) return
-  
+
   audioPlayer.value.volume = volume.value
   isMuted.value = volume.value === 0
 }
@@ -982,10 +996,10 @@ const switchPlayMode = () => {
   const currentIndex = modes.indexOf(playMode.value)
   const nextIndex = (currentIndex + 1) % modes.length
   playMode.value = modes[nextIndex]
-  
+
   const modeLabels = {
     sequence: '顺序播放',
-    loop: '循环播放', 
+    loop: '循环播放',
     random: '随机播放'
   }
   ElMessage.info(`切换到: ${modeLabels[playMode.value]}`)
@@ -994,7 +1008,7 @@ const switchPlayMode = () => {
 // 播放下一首
 const playNext = () => {
   if (currentPlaylist.value.length <= 1) return
-  
+
   let nextIndex
   if (playMode.value === 'random') {
     // 随机播放
@@ -1005,7 +1019,7 @@ const playNext = () => {
     // 顺序播放或循环播放
     nextIndex = (currentIndex.value + 1) % currentPlaylist.value.length
   }
-  
+
   currentIndex.value = nextIndex
   const nextSong = currentPlaylist.value[nextIndex]
   playMusic(nextSong, null, true)
@@ -1014,7 +1028,7 @@ const playNext = () => {
 // 播放上一首
 const playPrevious = () => {
   if (currentPlaylist.value.length <= 1) return
-  
+
   let prevIndex
   if (playMode.value === 'random') {
     // 随机播放
@@ -1028,7 +1042,7 @@ const playPrevious = () => {
       prevIndex = currentPlaylist.value.length - 1
     }
   }
-  
+
   currentIndex.value = prevIndex
   const prevSong = currentPlaylist.value[prevIndex]
   playMusic(prevSong, null, true)
@@ -1052,7 +1066,7 @@ const tabPlaylistResults = ref({
 // 标签切换处理
 const handleTabChange = (tabName) => {
   console.log('切换到标签页:', tabName)
-  
+
   // 保存当前标签页的搜索结果和歌单结果
   const currentTab = activeSearchTab.value
   if (currentTab) {
@@ -1065,7 +1079,7 @@ const handleTabChange = (tabName) => {
       tabPlaylistResults.value[currentTab] = [...playlist.value]
     }
   }
-  
+
   // 恢复新标签页的搜索结果和歌单结果
   if (tabName === 'keyword') {
     keywordResults.value = tabSearchResults.value[tabName] || []
@@ -1073,10 +1087,10 @@ const handleTabChange = (tabName) => {
     songIdResults.value = tabSearchResults.value[tabName] || []
   }
   playlist.value = tabPlaylistResults.value[tabName] || []
-  
+
   // 重置选中的歌曲
   selectedSongs.value = []
-  
+
   // 重置加载状态
   searching.value = false
   searchingSongId.value = false
@@ -1113,16 +1127,16 @@ const handleSizeChange = (size) => {
 // 获取用户收藏歌单
 const fetchUserFavoritePlaylist = async () => {
   if (!isLoggedIn.value) return
-  
+
   loadingUserPlaylist.value = true
   try {
     const response = await authFetch(`${API_BASE_URL}/proxy/userMusicList`, {
       method: 'GET',
       headers: getApiHeaders()
     })
-    
+
     const data = await response.json()
-    
+
     if (data.code === 200 && data.list) {
       // 解析歌单ID列表
       let playlistIds = []
@@ -1135,7 +1149,7 @@ const fetchUserFavoritePlaylist = async () => {
           playlistIds = match.map(id => parseInt(id))
         }
       }
-      
+
       if (playlistIds && playlistIds.length > 0) {
         // 保存所有歌单ID
         userPlaylistIds.value = playlistIds
@@ -1160,12 +1174,12 @@ const favoriteCurrentPlaylist = async () => {
     ElMessage.warning('请先登录后再收藏歌单')
     return
   }
-  
+
   if (!playlistId.value.trim()) {
     ElMessage.warning('当前没有可收藏的歌单')
     return
   }
-  
+
   try {
     const response = await authFetch(`${API_BASE_URL}/proxy/updateUserMusicList`, {
       method: 'POST',
@@ -1175,9 +1189,9 @@ const favoriteCurrentPlaylist = async () => {
       },
       body: JSON.stringify([playlistId.value])
     })
-    
+
     const data = await response.json()
-    
+
     if (data.code === 200) {
       // 将新歌单ID添加到列表
       const newId = parseInt(playlistId.value)
@@ -1206,7 +1220,7 @@ const deleteFavoritePlaylist = async (id) => {
     ElMessage.warning('请先登录')
     return
   }
-  
+
   try {
     const response = await authFetch(`${API_BASE_URL}/proxy/deleteUserMusicList`, {
       method: 'POST',
@@ -1216,9 +1230,9 @@ const deleteFavoritePlaylist = async (id) => {
       },
       body: JSON.stringify([id.toString()])
     })
-    
+
     const data = await response.json()
-    
+
     if (data.code === 200) {
       // 从列表中移除
       userPlaylistIds.value = userPlaylistIds.value.filter(playlistId => playlistId !== id)
@@ -1235,11 +1249,11 @@ const deleteFavoritePlaylist = async (id) => {
 const handleResize = () => updateFixedPlayerHeightVar()
 
 watch(
-  () => currentSong.value?.id,
-  (songId) => {
-    fetchLyricForSong(songId)
-    nextTick(() => updateFixedPlayerHeightVar())
-  }
+    () => currentSong.value?.id,
+    (songId) => {
+      fetchLyricForSong(songId)
+      nextTick(() => updateFixedPlayerHeightVar())
+    }
 )
 
 // 组件挂载时获取用户收藏歌单
@@ -1294,194 +1308,199 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="section">
+  <div class="section">
     <div class="fp-tablecell">
       <div id="content-containers">
-  <div ref="musicToolRoot" class="music-tool" :class="selectedTheme">
-    <div class="music-tool-bg"></div>
+        <div ref="musicToolRoot" class="music-tool" :class="selectedTheme">
+          <div class="music-tool-bg"></div>
 
-    <div class="music-tool-shell">
-      <div class="music-tool-top">
-        <div class="music-tool-brand">
-          <div class="music-tool-title">Music</div>
-          <div class="music-tool-subtitle">搜索、播放、歌词、歌单</div>
-        </div>
-        <div class="music-tool-top-right">
-        <div class="music-tool-quality">
-          <div class="music-tool-quality-label">主题</div>
-          <el-select v-model="selectedTheme" size="small" class="music-tool-theme-select" @change="handleThemeChange">
-            <el-option v-for="t in themeOptions" :key="t.value" :label="t.label" :value="t.value" />
-          </el-select>
-        </div>
-        <div class="music-tool-quality">
-          <div class="music-tool-quality-label">音质</div>
-          <el-select v-model="selectedQuality" size="small" class="music-tool-quality-select">
-            <el-option v-for="q in qualityOptions" :key="q.value" :label="q.label" :value="q.value" />
-          </el-select>
-        </div>
-        </div>
-      </div>
-
-      <div class="music-tool-layout">
-        <div class="music-tool-content">
-          <el-tabs v-model="activeSearchTab" class="music-tool-tabs" @tab-change="handleTabChange">
-            <el-tab-pane label="歌单" name="playlist">
-              <div class="music-tool-row">
-                <el-input v-model="playlistId" clearable placeholder="输入歌单ID" @keyup.enter="searchByPlaylist">
-                  <template #append>
-                    <el-button :icon="Search" :loading="loadingPlaylist" @click="searchByPlaylist">加载</el-button>
-                  </template>
-                </el-input>
+          <div class="music-tool-shell">
+            <div class="music-tool-top">
+              <div class="music-tool-brand">
+                <div class="music-tool-title">Music</div>
+                <div class="music-tool-subtitle">搜索、播放、歌词、歌单</div>
               </div>
-
-              <div class="music-tool-row music-tool-actions">
-                <el-button :icon="Star" :disabled="!playlistId" @click="favoriteCurrentPlaylist">收藏歌单</el-button>
-                <el-button :icon="InfoFilled" :disabled="selectedSongs.length === 0" :loading="loadingPlaylistInfo" @click="getPlaylistInfo">
-                  选中信息
-                </el-button>
-              </div>
-
-              <SongList
-                :songs="playlist"
-                title="歌单歌曲"
-                listType="playlist"
-                :currentSong="currentSong"
-                @playSong="(song) => playMusic(song, null, true)"
-                @download-song="downloadMusic"
-              />
-            </el-tab-pane>
-
-            <el-tab-pane label="关键词搜索" name="keyword">
-              <div class="music-tool-row">
-                <el-input
-                  v-model="searchKeyword"
-                  clearable
-                  placeholder="输入关键词（歌名 / 歌手）"
-                  @keyup.enter="searchMusic(1)"
-                >
-                  <template #append>
-                    <el-button :icon="Search" :loading="searching" @click="searchMusic(1)">搜索</el-button>
-                  </template>
-                </el-input>
-              </div>
-
-              <SongList
-                v-if="keywordResults.length"
-                :songs="keywordResults"
-                title="搜索结果"
-                listType="search"
-                :currentSong="currentSong"
-                @playSong="(song) => playMusic(song)"
-                @download-song="downloadMusic"
-              />
-
-              <div v-if="totalPages > 1" class="music-tool-pager">
-                <el-pagination
-                  background
-                  layout="total, sizes, prev, pager, next"
-                  :total="totalSongs"
-                  :current-page="currentPage"
-                  :page-size="pageSize"
-                  :page-sizes="[10, 20, 30, 50]"
-                  @current-change="handlePageChange"
-                  @size-change="handleSizeChange"
-                />
-              </div>
-            </el-tab-pane>
-
-            <el-tab-pane label="单曲ID" name="songId">
-              <div class="music-tool-row">
-                <el-input v-model="songId" clearable placeholder="输入歌曲ID" @keyup.enter="searchBySongId">
-                  <template #append>
-                    <el-button :icon="Search" :loading="searchingSongId" @click="searchBySongId">查询</el-button>
-                  </template>
-                </el-input>
-              </div>
-
-              <SongList
-                v-if="songIdResults.length"
-                :songs="songIdResults"
-                title="查询结果"
-                listType="search"
-                :currentSong="currentSong"
-                @playSong="(song) => playMusic(song)"
-                @download-song="downloadMusic"
-              />
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-
-        <div class="music-tool-aside">
-          <div class="music-tool-card music-tool-now">
-            <div class="music-tool-now-cover">
-              <img :src="getSongCoverUrl(currentSong)" alt="cover">
-            </div>
-            <div class="music-tool-now-meta">
-              <div class="music-tool-now-title">{{ currentSong?.name || '未选择歌曲' }}</div>
-              <div class="music-tool-now-artist">{{ getSongArtistText(currentSong) }}</div>
-              <div class="music-tool-now-progress" @click="seekTo">
-                <div class="music-tool-now-track">
-                  <div class="music-tool-now-bar" :style="{ width: `${progressPercentage}%` }"></div>
+              <div class="music-tool-top-right">
+                <div class="music-tool-quality">
+                  <div class="music-tool-quality-label">主题</div>
+                  <el-select v-model="selectedTheme" size="small" class="music-tool-theme-select"
+                             @change="handleThemeChange">
+                    <el-option v-for="t in themeOptions" :key="t.value" :label="t.label" :value="t.value"/>
+                  </el-select>
                 </div>
-                <div class="music-tool-now-time">
-                  <span>{{ formatTime(currentTime) }}</span>
-                  <span>{{ formatTime(duration) }}</span>
+                <div class="music-tool-quality">
+                  <div class="music-tool-quality-label">音质</div>
+                  <el-select v-model="selectedQuality" size="small" class="music-tool-quality-select">
+                    <el-option v-for="q in qualityOptions" :key="q.value" :label="q.label" :value="q.value"/>
+                  </el-select>
                 </div>
               </div>
-              <div class="music-tool-now-actions">
-                <el-button :icon="ArrowLeft" @click="playPrevious"></el-button>
-                <el-button :icon="isPlaying ? VideoPause : VideoPlay" :disabled="!canPlay" type="primary" @click="togglePlayPause">
-                  <!-- {{ isPlaying ? '暂停' : '播放' }} -->
-                </el-button>
-                <el-button :icon="ArrowRight" @click="playNext"></el-button>
-                <el-button :icon="List" @click="togglePlaylistOpen"></el-button>
-                <el-button :icon="Refresh" @click="switchPlayMode"></el-button>
+            </div>
+
+            <div class="music-tool-layout">
+              <div class="music-tool-content">
+                <el-tabs v-model="activeSearchTab" class="music-tool-tabs" @tab-change="handleTabChange">
+                  <el-tab-pane label="歌单" name="playlist">
+                    <div class="music-tool-row">
+                      <el-input v-model="playlistId" clearable placeholder="输入歌单ID" @keyup.enter="searchByPlaylist">
+                        <template #append>
+                          <el-button :icon="Search" :loading="loadingPlaylist" @click="searchByPlaylist">加载
+                          </el-button>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <div class="music-tool-row music-tool-actions">
+                      <el-button :icon="Star" :disabled="!playlistId" @click="favoriteCurrentPlaylist">收藏歌单
+                      </el-button>
+                      <el-button :icon="InfoFilled" :disabled="selectedSongs.length === 0"
+                                 :loading="loadingPlaylistInfo" @click="getPlaylistInfo">
+                        选中信息
+                      </el-button>
+                    </div>
+
+                    <SongList
+                        :songs="playlist"
+                        title="歌单歌曲"
+                        listType="playlist"
+                        :currentSong="currentSong"
+                        @playSong="(song) => playMusic(song, null, true)"
+                        @download-song="downloadMusic"
+                    />
+                  </el-tab-pane>
+
+                  <el-tab-pane label="关键词搜索" name="keyword">
+                    <div class="music-tool-row">
+                      <el-input
+                          v-model="searchKeyword"
+                          clearable
+                          placeholder="输入关键词（歌名 / 歌手）"
+                          @keyup.enter="searchMusic(1)"
+                      >
+                        <template #append>
+                          <el-button :icon="Search" :loading="searching" @click="searchMusic(1)">搜索</el-button>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <SongList
+                        v-if="keywordResults.length"
+                        :songs="keywordResults"
+                        title="搜索结果"
+                        listType="search"
+                        :currentSong="currentSong"
+                        @playSong="(song) => playMusic(song)"
+                        @download-song="downloadMusic"
+                    />
+
+                    <div v-if="totalPages > 1" class="music-tool-pager">
+                      <el-pagination
+                          background
+                          layout="total, sizes, prev, pager, next"
+                          :total="totalSongs"
+                          :current-page="currentPage"
+                          :page-size="pageSize"
+                          :page-sizes="[10, 20, 30, 50]"
+                          @current-change="handlePageChange"
+                          @size-change="handleSizeChange"
+                      />
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane label="单曲ID" name="songId">
+                    <div class="music-tool-row">
+                      <el-input v-model="songId" clearable placeholder="输入歌曲ID" @keyup.enter="searchBySongId">
+                        <template #append>
+                          <el-button :icon="Search" :loading="searchingSongId" @click="searchBySongId">查询</el-button>
+                        </template>
+                      </el-input>
+                    </div>
+
+                    <SongList
+                        v-if="songIdResults.length"
+                        :songs="songIdResults"
+                        title="查询结果"
+                        listType="search"
+                        :currentSong="currentSong"
+                        @playSong="(song) => playMusic(song)"
+                        @download-song="downloadMusic"
+                    />
+                  </el-tab-pane>
+                </el-tabs>
+              </div>
+
+              <div class="music-tool-aside">
+                <div class="music-tool-card music-tool-now">
+                  <div class="music-tool-now-cover">
+                    <img :src="getSongCoverUrl(currentSong)" alt="cover">
+                  </div>
+                  <div class="music-tool-now-meta">
+                    <div class="music-tool-now-title">{{ currentSong?.name || '未选择歌曲' }}</div>
+                    <div class="music-tool-now-artist">{{ getSongArtistText(currentSong) }}</div>
+                    <div class="music-tool-now-progress" @click="seekTo">
+                      <div class="music-tool-now-track">
+                        <div class="music-tool-now-bar" :style="{ width: `${progressPercentage}%` }"></div>
+                      </div>
+                      <div class="music-tool-now-time">
+                        <span>{{ formatTime(currentTime) }}</span>
+                        <span>{{ formatTime(duration) }}</span>
+                      </div>
+                    </div>
+                    <div class="music-tool-now-actions">
+                      <el-button :icon="ArrowLeft" @click="playPrevious"></el-button>
+                      <el-button :icon="isPlaying ? VideoPause : VideoPlay" :disabled="!canPlay" type="primary"
+                                 @click="togglePlayPause">
+                        <!-- {{ isPlaying ? '暂停' : '播放' }} -->
+                      </el-button>
+                      <el-button :icon="ArrowRight" @click="playNext"></el-button>
+                      <el-button :icon="List" @click="togglePlaylistOpen"></el-button>
+                      <el-button :icon="Refresh" @click="switchPlayMode"></el-button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="isLoggedIn && userPlaylistIds.length" class="music-tool-card">
+                  <div class="music-tool-card-title">我的收藏歌单</div>
+                  <div class="music-tool-fav-list">
+                    <div v-for="id in userPlaylistIds" :key="id" class="music-tool-fav-item">
+                      <el-button text @click="switchToPlaylist(id)">{{ id }}</el-button>
+                      <el-button text :icon="Delete" @click="deleteFavoritePlaylist(id)"/>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="lyricLines.length" class="music-tool-card">
+                  <div class="music-tool-card-title">歌词</div>
+                  <div class="music-tool-lyric-mini">
+                    <div
+                        v-for="(line, idx) in lyricLines"
+                        :key="idx"
+                        class="music-tool-lyric-line"
+                        :class="{ 'is-active': idx === activeLyricIndex }"
+                    >
+                      {{ line.text }}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div v-if="isLoggedIn && userPlaylistIds.length" class="music-tool-card">
-            <div class="music-tool-card-title">我的收藏歌单</div>
-            <div class="music-tool-fav-list">
-              <div v-for="id in userPlaylistIds" :key="id" class="music-tool-fav-item">
-                <el-button text @click="switchToPlaylist(id)">{{ id }}</el-button>
-                <el-button text :icon="Delete" @click="deleteFavoritePlaylist(id)" />
-              </div>
+          <el-dialog v-model="downloadDialogVisible" title="下载音乐" width="420px" @close="handleDownloadDialogClose">
+            <div v-if="downloadingSong" class="music-tool-download">
+              <div class="music-tool-download-title">{{ downloadingSong.name }}</div>
+              <div class="music-tool-download-sub">{{ getSongArtistText(downloadingSong) }}</div>
+              <el-select v-model="downloadQuality" class="music-tool-download-select">
+                <el-option v-for="q in qualityOptions" :key="q.value" :label="q.label" :value="q.value"/>
+              </el-select>
             </div>
-          </div>
-
-          <div v-if="lyricLines.length" class="music-tool-card">
-            <div class="music-tool-card-title">歌词</div>
-            <div class="music-tool-lyric-mini">
-              <div
-                v-for="(line, idx) in lyricLines"
-                :key="idx"
-                class="music-tool-lyric-line"
-                :class="{ 'is-active': idx === activeLyricIndex }"
-              >
-                {{ line.text }}
-              </div>
-            </div>
-          </div>
+            <template #footer>
+              <el-button @click="downloadDialogVisible = false">取消</el-button>
+              <el-button type="primary" @click="confirmDownload">下载</el-button>
+            </template>
+          </el-dialog>
         </div>
       </div>
-    </div>
-
-    <el-dialog v-model="downloadDialogVisible" title="下载音乐" width="420px" @close="handleDownloadDialogClose">
-      <div v-if="downloadingSong" class="music-tool-download">
-        <div class="music-tool-download-title">{{ downloadingSong.name }}</div>
-        <div class="music-tool-download-sub">{{ getSongArtistText(downloadingSong) }}</div>
-        <el-select v-model="downloadQuality" class="music-tool-download-select">
-          <el-option v-for="q in qualityOptions" :key="q.value" :label="q.label" :value="q.value" />
-        </el-select>
-      </div>
-      <template #footer>
-        <el-button @click="downloadDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmDownload">下载</el-button>
-      </template>
-    </el-dialog>
-  </div>
-        </div>
     </div>
   </div>
 </template>
@@ -1512,11 +1531,10 @@ onBeforeUnmount(() => {
 .music-tool-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(800px 360px at 10% 0%, color-mix(in srgb, var(--playerColor-3) 26%, transparent) 0%, transparent 60%),
-    radial-gradient(900px 420px at 90% 20%, color-mix(in srgb, var(--playerColor-7) 22%, transparent) 0%, transparent 62%),
-    radial-gradient(760px 420px at 60% 100%, color-mix(in srgb, var(--playerColor-10) 22%, transparent) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.76) 55%, rgba(255, 255, 255, 0.88) 100%);
+  background: radial-gradient(800px 360px at 10% 0%, color-mix(in srgb, var(--playerColor-3) 26%, transparent) 0%, transparent 60%),
+  radial-gradient(900px 420px at 90% 20%, color-mix(in srgb, var(--playerColor-7) 22%, transparent) 0%, transparent 62%),
+  radial-gradient(760px 420px at 60% 100%, color-mix(in srgb, var(--playerColor-10) 22%, transparent) 0%, transparent 60%),
+  linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.76) 55%, rgba(255, 255, 255, 0.88) 100%);
   filter: saturate(1.05);
   border-radius: 18px;
   z-index: 0;

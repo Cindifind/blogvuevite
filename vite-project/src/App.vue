@@ -7,7 +7,6 @@
           @logout="handleLogout"
           @close="toggleNavigation"
       />
-
       <!-- 使用router-view组件让路由生效 -->
       <BackgroundCarousel>
         <router-view/>
@@ -61,6 +60,7 @@ provide('globalNavigation', {
 })
 </script>
 
-<style scoped>
+<style>
+@import "tailwindcss";
 /* 全局重置样式已在index.css中定义 */
 </style>

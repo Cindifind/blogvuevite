@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import {onMounted, ref} from 'vue'
 
 // 轮播控制
 const currentImageIndex = ref(0) // 当前显示的图片索引
@@ -149,3 +149,89 @@ onMounted(async () => {
   startCarousel()
 })
 </script>
+<style>
+#section1 {
+  /* 修改高度为min-height以允许内容扩展 */
+  min-height: 100vh;
+  height: auto;
+  padding: 0;
+  position: relative;
+  /* 允许内容溢出 */
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  /* 移除overflow: hidden以允许滚动 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+#section1:after, #section3:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .5)
+}
+
+#section1, #section2, #section3, #section4 {
+  background-size: cover
+}
+
+#section1 {
+  height: 100vh;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+#background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+#current-layer, #next-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: -1; /* 确保在内容下方 */
+  transition: opacity 2s ease-in-out; /* 仅在切换时生效 */
+}
+
+/* 初始状态：当前层显示，下一层隐藏 */
+#current-layer {
+  opacity: 1;
+}
+#current-layer, #next-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transition: opacity 2s ease-in-out;
+}
+
+/* 初始状态：当前层显示，下一层隐藏 */
+#current-layer {
+  opacity: 1;
+}
+</style>
