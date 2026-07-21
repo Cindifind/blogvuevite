@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live2D 同源部署测试</title>
+</head>
+<body>
+
+<div class="main">
+    <div id="live2d-container"
+         data-model-path="https://muqingxi.com/live2d/Resources/Haru"
+         data-cubism-model="Haru"
+         data-show-background="false"
+         data-background-image="https://cdn.example.com/live2d/Resources/back_class_normal.png"
+         data-shader-path="https://muqingxi.com/live2d/Framework/Shaders/WebGL/">
+    </div>
+</div>
+
+<div id="status">加载中...</div>
+
+<script src="https://muqingxi.com/live2d/Core/live2dcubismcore.js"></script>
+<script type="module" src="https://muqingxi.com/live2d/assets/index-BtpXaDW6.js"></script>
+
+<script>
+    const statusEl = document.getElementById('status');
+
+    const origWarn = console.warn;
+    console.warn = function(...args) {
+        const msg = args.join(' ');
+        if (msg.includes('Shader program is not initialized')) {
+            statusEl.textContent = '等着色器...';
+            statusEl.style.cssText = 'background:#f90;color:white';
+        }
+        origWarn.apply(console, args);
+    };
+
+    const origLog = console.log;
+    console.log = function(...args) {
+        const msg = args.join(' ');
+        if (msg.includes('着色器已加载')) {
+            statusEl.textContent = '着色器就绪';
+            statusEl.style.cssText = 'background:#2563eb;color:white';
+        }
+        if (msg.includes('成功从HTML配置加载模型')) {
+            statusEl.textContent = '模型已加载';
+            statusEl.style.cssText = 'background:#16a34a;color:white';
+        }
+        origLog.apply(console, args);
+    };
+
+    function changeModel(name) {
+        document.getElementById('live2d-container').setAttribute('data-cubism-model', name);
+        location.reload();
+    }
+
+    function toggleBackground(show) {
+        document.getElementById('live2d-container').setAttribute('data-show-background', show ? 'true' : 'false');
+        location.reload();
+    }
+
+    function applyBgImage() {
+        const val = document.getElementById('bgImageInput').value.trim();
+        const el = document.getElementById('live2d-container');
+        if (val) {
+            el.setAttribute('data-background-image', val);
+        } else {
+            el.removeAttribute('data-background-image');
+        }
+    }
+
+    function applyShaderPath() {
+        const val = document.getElementById('shaderPathInput').value.trim();
+        const el = document.getElementById('live2d-container');
+        if (val) {
+            el.setAttribute('data-shader-path', val);
+        } else {
+            el.removeAttribute('data-shader-path');
+        }
+    }
+
+    function applyAll() {
+        applyBgImage();
+        applyShaderPath();
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
