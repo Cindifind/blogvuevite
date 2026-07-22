@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <div class="index-container">
+      <Live2D/>
       <!-- 导航菜单 -->
       <Navigation
           :is-open="isNavigationOpen"
@@ -12,13 +13,9 @@
         <router-view/>
       </BackgroundCarousel>
 
+
       <!-- 天气小部件 -->
       <WeatherWidget/>
-      <!-- <div id="gui-MusicPlayer"
-           data-themeColor="gui-girlPink"
-           data-localMusic="http://muqingxi.com:2345/proxy/music"
-           data-fadeOutAutoplay>
-      </div> -->
     </div>
   </div>
   <Footer/>
@@ -30,6 +27,7 @@ import WeatherWidget from "./components/WeatherWidget.vue";
 import Footer from "./components/Footer.vue";
 import BackgroundCarousel from "./components/BackgroundCarousel.vue";
 import Navigation from "./components/Navigation.vue";
+import Live2D from "./live2D/Live2D.vue";
 
 // 全局导航状态
 const isNavigationOpen = ref(false)
