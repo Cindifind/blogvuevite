@@ -130,7 +130,7 @@ onUnmounted(() => {
         data-cubism-model="Elysia"
         data-model-path="./Elysia"
         data-show-background="false"
-        data-shader-path="https://muqingxi.com/live2d/Framework/Shaders/WebGL/"
+        data-shader-path="http://live2d.muqingxi.com/Framework/Shaders/WebGL/"
     ></div>
 
     <!-- 缩放手柄 -->
