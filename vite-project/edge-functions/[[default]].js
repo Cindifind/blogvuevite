@@ -49,7 +49,7 @@ export function onRequest(context) {
         // 2. 构造转发 URL
         // 将原始请求的完整路径和查询字符串作为参数传递给后端
         const originalUrl = url.pathname + url.search;
-        const backendUrl = `https://muqingxi.com:2345/getUrl?url=${encodeURIComponent(originalUrl)}`;
+        const backendUrl = `https://muqingxi.com:2345/proxy/getUrl?url=${encodeURIComponent(originalUrl)}`;
 
         // 3. 发起转发请求（内部转发，非 302 重定向）
         // 注意：需要确保后端服务支持 CORS 或同源策略，或者省略 Origin 头
