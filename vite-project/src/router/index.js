@@ -1,4 +1,4 @@
-import {createRouter, createWebHashHistory} from 'vue-router'
+import {createRouter, createWebHistory} from 'vue-router'
 
 // 导入页面组件
 import IndexPage from '../views/index.vue'
@@ -80,7 +80,7 @@ const routes = [
 
 // 创建路由器实例
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes
 })
 

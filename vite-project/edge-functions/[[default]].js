@@ -92,6 +92,27 @@ export function onRequest(context) {
         });
     }
 
-    // 5. 非爬虫请求：正常访问原有页面
-    return fetch(request);
+    // 5. 非爬虫请求：History 路由模式的 SPA Fallback
+    // 判断是否为静态资源请求（文件扩展名）
+    const isStaticFile = /\.[a-zA-Z0-9]{1,10}$/.test(pathname);
+
+    if (isStaticFile) {
+        // 静态资源：直接返回原文件
+        return fetch(request);
+    }
+
+    // 非静态资源（SPA路由页面）：返回 index.html，交由 Vue Router 处理
+    const indexRequest = new Request(new URL('/index.html', url.origin).href, {
+        method: 'GET',
+        headers: request.headers,
+    });
+
+    return fetch(indexRequest).then(response => {
+        const newResponse = new Response(response.body, response);
+        // 设置 no-cache，确保 SPA 页面始终由前端路由控制
+        newResponse.headers.set('Cache-Control', 'no-cache');
+        return newResponse;
+    }).catch(error => {
+        return new Response('Service Unavailable', { status: 503 });
+    });
 }
