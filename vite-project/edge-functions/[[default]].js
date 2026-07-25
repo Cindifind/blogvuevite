@@ -60,10 +60,10 @@ export function onRequest(context) {
         let backendApi;
         if (isSitemapRequest(pathname)) {
             // Sitemap 请求 → 调用 /sitemap 接口
-            backendApi = `https://muqingxi.com:2345/sitemap?urlPath=${encodeURIComponent(fullUrl)}`;
+            backendApi = `https://muqingxi.com:2345/proxy/sitemap?urlPath=${encodeURIComponent(fullUrl)}`;
         } else {
             // 普通页面请求 → 调用 /seoPage 接口
-            backendApi = `https://muqingxi.com:2345/seoPage?urlPath=${encodeURIComponent(fullUrl)}`;
+            backendApi = `https://muqingxi.com:2345/proxy/seoPage?urlPath=${encodeURIComponent(fullUrl)}`;
         }
 
         // 4. 发起转发请求（内部转发）
