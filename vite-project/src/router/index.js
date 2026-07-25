@@ -52,9 +52,16 @@ const routes = [
     },
     {
         path: '/music',
-        name: '/Music',
+        name: 'Music',
         component: () => import('../views/music.vue'),
         meta: { requiresAuth: true }
+    },
+    // SEO管理页面路由
+    {
+        path: '/seo-management',
+        name: 'SeoManagement',
+        component: () => import('../views/seo-management.vue'),
+        meta: { requiresAuth: true, requiresAdmin: true }
     }
     // 图片管理页面路由
     // // 留言页面路由
