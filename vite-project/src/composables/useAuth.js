@@ -31,14 +31,16 @@ export function useAuth() {
     const isLoading = computed(() => userStore.isLoading)
 
     // 🔐 登录函数
-    const login = async (email, password) => {
+    const login = async (email, password, options = {}) => {
         try {
             // 使用用户store的登录方法
             const result = await userStore.login(email, password)
             
             if (result.success) {
-                // 登录成功，跳转到首页
-                router.push('/')
+                // 登录成功，跳转到首页（可通过 redirect: false 跳过）
+                if (options.redirect !== false) {
+                    router.push('/')
+                }
                 return { success: true, data: result.data }
             } else {
                 return { success: false, error: result.error }

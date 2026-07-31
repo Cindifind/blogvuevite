@@ -114,9 +114,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, defineProps, defineEmits } from 'vue'
 import { useAuth } from '../composables/useAuth' // 导入 useAuth
 import { ElMessage } from 'element-plus' // 导入 Element Plus 消息组件
+
+const props = defineProps({
+  noRedirect: { type: Boolean, default: false }
+})
+const emit = defineEmits(['loginSuccess'])
 
 // 使用 useAuth composable
 const { login: authLogin } = useAuth()
@@ -308,10 +313,14 @@ async function handleLogin() {
   }
 
   // 使用 useAuth 中的登录方法
-  const result = await authLogin(email, password)
+  const result = await authLogin(email, password, { redirect: !props.noRedirect })
 
   // 注意：不需要手动处理跳转和成功消息，useAuth 已经处理了
-  if (!result.success) {
+  if (result.success) {
+    if (props.noRedirect) {
+      emit('loginSuccess')
+    }
+  } else {
     // 错误消息已经在 useAuth 中处理
     return
   }
