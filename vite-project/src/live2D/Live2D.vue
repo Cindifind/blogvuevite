@@ -276,8 +276,8 @@ onUnmounted(() => {
       <!-- Live2D 配置 -->
       <div
         class="live2d-config w-full h-full"
-        data-cubism-model="Elysia"
-        data-model-path="./Elysia"
+        data-cubism-model="https://www.muqingxi.com/Elysia/Elysia"
+        data-model-path="https://www.muqingxi.com/Elysia"
         data-show-background="false"
         data-shader-path="http://live2d.muqingxi.com/Framework/Shaders/WebGL/"
       ></div>
