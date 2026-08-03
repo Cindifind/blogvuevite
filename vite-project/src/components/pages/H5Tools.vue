@@ -238,9 +238,9 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, Edit, Delete } from '@element-plus/icons-vue'
-import { useAuth } from '../composables/useAuth'
-import { getCachedFavicon } from '../utils/iconUtils'
-import { authFetch } from '../utils/api'
+import { useAuth } from '../../composables/useAuth'
+import { getCachedFavicon } from '../../utils/iconUtils'
+import { authFetch } from '../../utils/api'
 
 // 使用认证
 const { isLoggedIn } = useAuth()

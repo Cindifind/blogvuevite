@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import Voice from '../components/Voice.vue'
+import Voice from '../components/pages/Voice.vue'
 </script>
 
 <style scoped>

@@ -16,6 +16,12 @@
 
       <!-- 天气小部件 -->
       <WeatherWidget/>
+      <!-- 音乐播放器 -->
+      <GuiMusicPlayer
+        theme-color="gui-girlPink"
+        local-music="https://muqingxi.com:2345/proxy/music"
+        :fade-out-autoplay="true"
+      />
     </div>
   </div>
   <Footer/>
@@ -23,11 +29,12 @@
 
 <script setup>
 import {ref, provide} from 'vue'
-import WeatherWidget from "./components/WeatherWidget.vue";
-import Footer from "./components/Footer.vue";
-import BackgroundCarousel from "./components/BackgroundCarousel.vue";
-import Navigation from "./components/Navigation.vue";
+import WeatherWidget from "./components/shared/WeatherWidget.vue";
+import Footer from "./components/shared/Footer.vue";
+import BackgroundCarousel from "./components/shared/BackgroundCarousel.vue";
+import Navigation from "./components/shared/Navigation.vue";
 import Live2D from "./live2D/Live2D.vue";
+import GuiMusicPlayer from "./components/shared/GuiMusicPlayer.vue";
 
 // 全局导航状态
 const isNavigationOpen = ref(false)

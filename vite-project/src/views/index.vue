@@ -10,7 +10,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import StatsSection from '../components/StatsSection.vue'
+import StatsSection from '../components/shared/StatsSection.vue'
 
 // 🔧 使用 useAuth() composable
 const { isLoggedIn, userInfo, login, logout } = useAuth()

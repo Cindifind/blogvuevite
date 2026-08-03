@@ -104,8 +104,8 @@
 <script setup>
 import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 import {useRouter} from 'vue-router'
-import {useAuth} from '../composables/useAuth'
-import { authFetch } from '../utils/api'
+import {useAuth} from '../../composables/useAuth'
+import { authFetch } from '../../utils/api'
 
 // 使用路由和认证
 const router = useRouter()

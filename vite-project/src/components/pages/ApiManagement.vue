@@ -212,8 +212,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Link, View, Edit, Delete } from '@element-plus/icons-vue'
-import { useAuth } from '../composables/useAuth'
-import { authFetch } from '../utils/api'
+import { useAuth } from '../../composables/useAuth'
+import { authFetch } from '../../utils/api'
 
 // 认证与管理员判断（复用 H5Tools 的写法风格）
 const { isLoggedIn, userInfo } = useAuth()

@@ -6,7 +6,7 @@
 
 <script setup>
 import { inject } from 'vue'
-import H5Tools from '../components/H5Tools.vue'
+import H5Tools from '../components/pages/H5Tools.vue'
 
 // 注入全局导航状态
 const globalNavigation = inject('globalNavigation')

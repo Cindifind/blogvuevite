@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import ApiManagement from '../components/ApiManagement.vue'
+import ApiManagement from '../components/pages/ApiManagement.vue'
 </script>
 
 <style scoped>

@@ -279,8 +279,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, View, Edit, Delete, Refresh } from '@element-plus/icons-vue'
-import { useAuth } from '../composables/useAuth'
-import { authFetch } from '../utils/api'
+import { useAuth } from '../../composables/useAuth'
+import { authFetch } from '../../utils/api'
 
 // 认证
 const { isLoggedIn, userInfo } = useAuth()

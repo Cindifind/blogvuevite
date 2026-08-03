@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-import MusicTool from '../components/MusicTool.vue'
-import Login from '../components/Login.vue'
+import MusicTool from '../components/pages/MusicTool.vue'
+import Login from '../components/pages/Login.vue'
 import { useAuth } from '../composables/useAuth'
 
 const { isLoggedIn } = useAuth()

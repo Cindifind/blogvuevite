@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import SeoManagement from '../components/SeoManagement.vue'
+import SeoManagement from '../components/pages/SeoManagement.vue'
 </script>
 
 <style scoped>

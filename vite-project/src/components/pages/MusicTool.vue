@@ -14,14 +14,18 @@ import {
   Star,
   Delete
 } from '@element-plus/icons-vue'
-import VolumeIcons from './VolumeIcons.vue'
-import {useAuth} from '../composables/useAuth'
+import VolumeIcons from '../shared/VolumeIcons.vue'
+import {useAuth} from '../../composables/useAuth'
 import SongList from './SongList.vue'
-import {decodeMusicInfoList} from '../utils/protoMusic'
-import {authFetch} from '../utils/api'
+import {decodeMusicInfoList} from '../../utils/protoMusic'
+import {authFetch} from '../../utils/api'
+import {useMusicStore} from '../../stores/music'
 
 // 使用用户认证
 const {isLoggedIn, token} = useAuth()
+
+// 使用共享音乐 store（与 GuiMusicPlayer.vue 共享同一份歌单）
+const musicStore = useMusicStore()
 
 // 用户收藏歌单相关
 const userPlaylistIds = ref([])
@@ -173,6 +177,64 @@ const renderSongDurationText = (song) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
+const updateGlobalPlayerPlaylist = (songs) => {
+  const root = document.querySelector('#gui-MusicPlayer')
+  if (!root) return
+  const list = root.querySelector('.gui-listOfSongs')
+  if (!list) return
+
+  const safeSongs = Array.isArray(songs) ? songs : []
+  // 图片懒加载：src 使用占位符，真实地址放在 data-musicLjz-src，
+  // 由 observePlaylistImages() 在元素进入视口时再加载，避免一次性加载所有图片。
+  // 图源统一使用 getSongCoverUrl（200x200 小图），与播放器侧边栏共用同一份图。
+  list.innerHTML = safeSongs.map(song => {
+    const songId = song?.id ?? ''
+    const title = song?.name ?? ''
+    const author = (song?.artistsname || song?.artist || song?.artists || song?.ar?.[0]?.name || '未知艺术家')
+    const picture = getSongCoverUrl(song)
+    const durationText = renderSongDurationText(song)
+    const mp3 = `song:${songId}`
+    return `<li class="gui-songsItem" data-index="${songId}" data-mp3url="${mp3}">
+      <div class="gui-songListSongPictures">
+        <i class="gui-songIcon iconfont icon-bofang"></i>
+        <img data-musicLjz-src="${picture}" src="${COVER_LOADING}" alt="songPicture" class="gui-playlistImg">
+      </div>
+      <div class="gui-playlistSongInformation">
+        <div class="gui-songTitle">
+          <h5 class="gui-songName">${title}</h5>
+          <p class="gui-authorAndDuration">
+            <sapn class="gui-songAuthor">${author}</sapn>
+            <span class="gui-songLength iconfont icon-shijian">\t${durationText}</span>
+          </p>
+        </div>
+      </div>
+    </li>`
+  }).join('')
+
+  // 绑定点击事件：调用 playMusic 实际播放（与原生播放器 updateSong 等效，
+  // 但使用 MusicTool.vue 的 authFetch 与音质逻辑）
+  const items = list.querySelectorAll('.gui-songsItem')
+  items.forEach((item, index) => {
+    item.addEventListener('click', () => {
+      const song = safeSongs[index]
+      if (!song) return
+      currentPlaylist.value = [...safeSongs]
+      currentIndex.value = index
+      musicStore.setCurrentPlaylist(currentPlaylist.value)
+      musicStore.setCurrentSong(song, index)
+      setGlobalPlayerPlaylistActive(index)
+      playMusic(song, null, true)
+    })
+  })
+
+  if (safeSongs.length) {
+    setGlobalPlayerPlaylistActive(0)
+  }
+
+  // 启动懒加载观察器，图片进入视口时才加载
+  observePlaylistImages(list)
+}
+
 const setGlobalPlayerPlaylistActive = (activeIdx) => {
   const root = document.querySelector('#gui-MusicPlayer')
   if (!root) return
@@ -187,52 +249,33 @@ const setGlobalPlayerPlaylistActive = (activeIdx) => {
   })
 }
 
-const updateGlobalPlayerPlaylist = (songs) => {
-  const root = document.querySelector('#gui-MusicPlayer')
-  if (!root) return
-  const list = root.querySelector('.gui-listOfSongs')
-  if (!list) return
-
-  const safeSongs = Array.isArray(songs) ? songs : []
-  list.innerHTML = safeSongs.map(song => {
-    const songId = song?.id ?? ''
-    const title = song?.name ?? ''
-    const author = (song?.artistsname || song?.artist || song?.artists || song?.ar?.[0]?.name || '未知艺术家')
-    const rawPicture = (song?.picurl || song?.cover || song?.al?.picUrl || '/default-music-cover.jpg')
-    const picture = String(rawPicture).trim().replace(/`/g, '')
-    const durationText = renderSongDurationText(song)
-    const mp3 = `song:${songId}`
-    return `<li class="gui-songsItem" data-index="${songId}" data-mp3url="${mp3}">
-      <div class="gui-songListSongPictures">
-        <i class="gui-songIcon iconfont icon-bofang"></i>
-        <img data-musicLjz-src="${picture}?param=200x200" src="${picture}?param=200x200" alt="songPicture" class="gui-playlistImg">
-      </div>
-      <div class="gui-playlistSongInformation">
-        <div class="gui-songTitle">
-          <h5 class="gui-songName">${title}</h5>
-          <p class="gui-authorAndDuration">
-            <sapn class="gui-songAuthor">${author}</sapn>
-            <span class="gui-songLength iconfont icon-shijian">\t${durationText}</span>
-          </p>
-        </div>
-      </div>
-    </li>`
-  }).join('')
-
-  const items = list.querySelectorAll('.gui-songsItem')
-  items.forEach((item, index) => {
-    item.addEventListener('click', () => {
-      const song = safeSongs[index]
-      currentPlaylist.value = [...safeSongs]
-      currentIndex.value = index
-      setGlobalPlayerPlaylistActive(index)
-      playMusic(song, null, true)
-    })
-  })
-
-  if (safeSongs.length) {
-    setGlobalPlayerPlaylistActive(0)
+/**
+ * 使用 IntersectionObserver 监听播放列表图片懒加载。
+ * 图片进入视口时才加载真实地址，避免一次性加载所有封面图。
+ */
+let playlistImageObserver = null
+const observePlaylistImages = (container) => {
+  if (!container) return
+  if (!playlistImageObserver) {
+    playlistImageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        const img = entry.target
+        const src = img.getAttribute('data-musicLjz-src')
+        if (!src) {
+          playlistImageObserver.unobserve(img)
+          return
+        }
+        img.onload = () => img.removeAttribute('data-musicLjz-src')
+        img.onerror = () => img.removeAttribute('data-musicLjz-src')
+        img.setAttribute('src', src)
+        playlistImageObserver.unobserve(img)
+      })
+    }, { rootMargin: '120px 0px' })
   }
+  container.querySelectorAll('img[data-musicLjz-src]').forEach(img => {
+    playlistImageObserver.observe(img)
+  })
 }
 
 const lyricLines = ref([])
@@ -322,6 +365,7 @@ const fetchLyricForSong = async (songId) => {
   if (!songId) {
     lyricLines.value = []
     activeLyricIndex.value = -1
+    musicStore.setLyricLines([])
     renderLyricsToGlobalPlayer()
     return
   }
@@ -335,11 +379,13 @@ const fetchLyricForSong = async (songId) => {
     const ok = data?.code === 200 || data?.code === '200'
     const lrcText = data?.lrc?.lyric
     lyricLines.value = ok && lrcText ? parseLrc(lrcText) : []
+    musicStore.setLyricLines(lyricLines.value)
     updateActiveLyric()
     renderLyricsToGlobalPlayer()
   } catch (e) {
     lyricLines.value = []
     activeLyricIndex.value = -1
+    musicStore.setLyricLines([])
     renderLyricsToGlobalPlayer()
   }
 }
@@ -508,6 +554,16 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
         }
       }
 
+      // 同步到共享 store
+      musicStore.setCurrentPlaylist(currentPlaylist.value)
+      musicStore.setCurrentSong(currentSong.value, currentIndex.value)
+
+      // 非从播放列表点击时（如搜索结果），需要把当前播放列表同步渲染到原生播放器，
+      // 否则原生播放器列表仍显示旧歌单，选中索引对不上
+      if (!fromPlaylist) {
+        updateGlobalPlayerPlaylist(currentPlaylist.value)
+      }
+
       // 自动播放
       const ensureAudio = async () => {
         if (audioPlayer.value) return audioPlayer.value
@@ -534,16 +590,20 @@ const playMusic = async (song, quality = null, fromPlaylist = false) => {
 
       audioEl.src = data.url
       syncGlobalPlayerInfo(currentSong.value)
+      // 更新原生播放器列表选中项视觉状态（gui-inExecution）
+      setGlobalPlayerPlaylistActive(currentIndex.value)
       syncGlobalPlayerPlayingUI(false)
 
       setTimeout(() => {
         audioEl.play().then(() => {
           isPlaying.value = true
+          musicStore.setPlaying(true)
           syncGlobalPlayerPlayingUI(true)
         }).catch(error => {
           console.error('自动播放失败:', error)
           ElMessage.warning('自动播放失败，请手动点击播放')
           isPlaying.value = false
+          musicStore.setPlaying(false)
           syncGlobalPlayerPlayingUI(false)
         })
       }, 100)
@@ -667,14 +727,19 @@ const searchByPlaylist = async () => {
         currentPlaylist.value = [...playlist.value]
         currentIndex.value = 0
         storePluginPlaylistId(playlistId.value)
+        // 同步到共享 store，并直接渲染到原生播放器（含图片懒加载与点击播放事件）
+        musicStore.setPlaylist(songs, playlistId.value)
+        musicStore.setCurrentSong(null, 0)
         updateGlobalPlayerPlaylist(currentPlaylist.value)
         ElMessage.success(`获取歌单成功，共 ${playlist.value.length} 首歌曲（ProtoBuf）`)
       } else {
         playlist.value = []
+        musicStore.clearPlaylist()
         ElMessage.warning('歌单为空或解析失败')
       }
     } else {
       playlist.value = []
+      musicStore.clearPlaylist()
       ElMessage.warning('歌单数据为空')
     }
   } catch (error) {
@@ -738,12 +803,14 @@ const onAudioError = (error) => {
   ElMessage.error('音频播放失败，可能是链接已过期')
   canPlay.value = false
   isPlaying.value = false
+  musicStore.setPlaying(false)
   syncGlobalPlayerPlayingUI(false)
 }
 
 // 音频播放结束事件
 const onAudioEnded = () => {
   isPlaying.value = false
+  musicStore.setPlaying(false)
   syncGlobalPlayerPlayingUI(false)
   if (playMode.value === 'loop') {
     // 单曲循环
@@ -751,6 +818,7 @@ const onAudioEnded = () => {
       audioPlayer.value.currentTime = 0
       audioPlayer.value.play()
       isPlaying.value = true
+      musicStore.setPlaying(true)
       syncGlobalPlayerPlayingUI(true)
     }
   } else {
@@ -780,15 +848,18 @@ const togglePlayPause = () => {
   if (isPlaying.value) {
     audioPlayer.value.pause()
     isPlaying.value = false
+    musicStore.setPlaying(false)
     syncGlobalPlayerPlayingUI(false)
   } else {
     audioPlayer.value.play().then(() => {
       isPlaying.value = true
+      musicStore.setPlaying(true)
       syncGlobalPlayerPlayingUI(true)
     }).catch(error => {
       console.error('播放失败:', error)
       ElMessage.error('播放失败')
       isPlaying.value = false
+      musicStore.setPlaying(false)
       syncGlobalPlayerPlayingUI(false)
     })
   }
@@ -853,9 +924,16 @@ const getSongArtistText = (song) => {
   return song.artist || song.artistsname || song.artists || song.ar?.[0]?.name || '未知艺术家'
 }
 
+// 统一图源：插件列表与播放器侧边栏共用同一份小图（200x200），避免渲染原图占用流量
+const COVER_SUFFIX = '?param=200x200'
+const COVER_FALLBACK = '/default-music-cover.jpg'
+const COVER_LOADING = '/gui-MusicPlayer/images/playerLoad.gif'
+
 const getSongCoverUrl = (song) => {
-  if (!song) return '/gui-MusicPlayer/images/playerLoad.gif'
-  return song.cover || song.picurl || song.al?.picUrl || '/default-music-cover.jpg'
+  if (!song) return COVER_LOADING
+  const raw = song.cover || song.picurl || song.al?.picUrl || COVER_FALLBACK
+  if (raw === COVER_FALLBACK || raw === COVER_LOADING) return raw
+  return `${String(raw).trim().replace(/`/g, '')}${COVER_SUFFIX}`
 }
 
 const ensureGuiMusicPlayerAssets = () => {
@@ -1022,6 +1100,7 @@ const playNext = () => {
 
   currentIndex.value = nextIndex
   const nextSong = currentPlaylist.value[nextIndex]
+  musicStore.setCurrentSong(nextSong, nextIndex)
   playMusic(nextSong, null, true)
 }
 
@@ -1045,6 +1124,7 @@ const playPrevious = () => {
 
   currentIndex.value = prevIndex
   const prevSong = currentPlaylist.value[prevIndex]
+  musicStore.setCurrentSong(prevSong, prevIndex)
   playMusic(prevSong, null, true)
 }
 
@@ -1105,9 +1185,15 @@ const updateSelectedSongs = (newSelectedSongs) => {
 // 监听音质切换，自动重新获取当前歌曲并播放
 watch(selectedQuality, async (newQuality, oldQuality) => {
   if (currentSong.value && newQuality !== oldQuality) {
+    musicStore.setQuality(newQuality)
     // 重新获取当前歌曲的播放链接并播放
     await playMusic(currentSong.value, newQuality, true)
   }
+})
+
+// 监听主题切换，同步到 store
+watch(selectedTheme, (newTheme) => {
+  musicStore.setTheme(newTheme)
 })
 
 // 分页处理函数
@@ -1261,14 +1347,45 @@ onMounted(() => {
   ensureGuiMusicPlayerAssets()
   const storedTheme = getStoredTheme()
   const currentTheme = detectGlobalPlayerTheme()
-  selectedTheme.value = storedTheme || currentTheme || 'gui-original'
+  selectedTheme.value = storedTheme || currentTheme || musicStore.selectedTheme || 'gui-original'
   applyThemeToGlobalPlayer(selectedTheme.value)
+  // 同步初始主题和音质到共享 store
+  musicStore.setTheme(selectedTheme.value)
+  musicStore.setQuality(selectedQuality.value)
+  if (playlistId.value) musicStore.setPlaylistId(playlistId.value)
   nextTick(() => syncThemeVarsFromGlobalPlayer())
 
-  const cachedPlaylistId = loadPluginPlaylistId()
-  if (cachedPlaylistId && !playlistId.value.trim()) {
-    playlistId.value = cachedPlaylistId
-    searchByPlaylist()
+  // 优先从共享 store 恢复状态（切出页面再切回时，store 数据仍在）
+  // 这样能立即重新渲染原生播放器列表并绑定新的事件，避免旧闭包导致切歌失效
+  if (musicStore.hasPlaylist) {
+    playlist.value = [...musicStore.playlist]
+    currentPlaylist.value = [...musicStore.currentPlaylist]
+    if (musicStore.currentSong) {
+      currentSong.value = musicStore.currentSong
+      currentIndex.value = musicStore.currentIndex
+    }
+    if (musicStore.playlistId) {
+      playlistId.value = musicStore.playlistId
+    }
+    if (musicStore.lyricLines?.length) {
+      lyricLines.value = [...musicStore.lyricLines]
+    }
+    // 重新渲染原生播放器列表，绑定新的 click 事件（引用当前组件实例的 playMusic）
+    nextTick(() => {
+      updateGlobalPlayerPlaylist(currentPlaylist.value)
+      if (musicStore.currentSong) {
+        syncGlobalPlayerInfo(currentSong.value)
+        setGlobalPlayerPlaylistActive(currentIndex.value)
+      }
+    })
+  } else {
+    // store 为空时，从 localStorage 缓存恢复歌单 ID 并拉取
+    const cachedPlaylistId = loadPluginPlaylistId()
+    if (cachedPlaylistId && !playlistId.value.trim()) {
+      playlistId.value = cachedPlaylistId
+      musicStore.setPlaylistId(cachedPlaylistId)
+      searchByPlaylist()
+    }
   }
 
   waitForGlobalPlayerReady().then((audioEl) => {
@@ -1285,6 +1402,11 @@ onMounted(() => {
     }
     renderLyricsToGlobalPlayer()
     syncGlobalPlayerInfo(currentSong.value)
+    // 恢复播放状态 UI
+    syncGlobalPlayerPlayingUI(musicStore.isPlaying)
+    if (musicStore.currentSong) {
+      setGlobalPlayerPlaylistActive(currentIndex.value)
+    }
     syncThemeVarsFromGlobalPlayer()
   })
 

@@ -14,7 +14,9 @@
               <i class="fa fa-lock"></i>
               <input type="password" placeholder="密码" v-model="loginForm.password" required>
             </div>
-            <button class="btna" type="submit" @click="handleLogin">登录</button>
+            <button class="btna" type="submit" @click="handleLogin" :disabled="loginLoading">
+              {{ loginLoading ? '登录中...' : '登录' }}
+            </button>
 
             <div class="login-link">
               <a href="#" @click.prevent="openTab('forget')">忘记密码</a> |
@@ -54,12 +56,14 @@
               <div class="textbox verification-code">
                 <i class="fa fa-code" style="left:15px;top:50%;transform:translateY(-50%);"></i>
                 <input type="text" v-model="registerForm.code" placeholder="验证码" required style="padding-left:45px;">
-                <button type="button" @click="sendRegisterCode" :disabled="countdown > 0">
-                  {{ countdown > 0 ? `${countdown}秒后可重发` : '发送验证码' }}
+                <button type="button" @click="sendRegisterCode" :disabled="countdown > 0 || registerCodeLoading">
+                  {{ registerCodeLoading ? '发送中...' : (countdown > 0 ? `${countdown}秒后可重发` : '发送验证码') }}
                 </button>
               </div>
 
-              <button class="btna" type="submit">注册</button>
+              <button class="btna" type="submit" :disabled="registerLoading">
+                {{ registerLoading ? '注册中...' : '注册' }}
+              </button>
             </form>
 
             <div class="login-link">
@@ -77,7 +81,9 @@
                 <i class="fa fa-envelope"></i>
                 <input type="email" placeholder="请输入邮箱地址" v-model="forgetForm.email" required>
               </div>
-              <button class="btna" @click="sendVerificationCode">发送验证码</button>
+              <button class="btna" @click="sendVerificationCode" :disabled="forgetCodeLoading">
+                {{ forgetCodeLoading ? '发送中...' : '发送验证码' }}
+              </button>
               <div class="back-to-login">
                 <a href="#" @click.prevent="openTab('login')">返回登录</a>
               </div>
@@ -101,7 +107,9 @@
                 <i class="fa fa-lock"></i>
                 <input type="password" placeholder="确认新密码" v-model="forgetForm.confirmPassword" required>
               </div>
-              <button class="btna" @click="changePassword">重置密码</button>
+              <button class="btna" @click="changePassword" :disabled="changePasswordLoading">
+                {{ changePasswordLoading ? '提交中...' : '重置密码' }}
+              </button>
               <div class="back-to-login">
                 <a href="#" @click.prevent="openTab('login')">返回登录</a>
               </div>
@@ -115,7 +123,7 @@
 
 <script setup>
 import { ref, reactive, defineProps, defineEmits } from 'vue'
-import { useAuth } from '../composables/useAuth' // 导入 useAuth
+import { useAuth } from '../../composables/useAuth' // 导入 useAuth
 import { ElMessage } from 'element-plus' // 导入 Element Plus 消息组件
 
 const props = defineProps({
@@ -131,6 +139,13 @@ const activeTab = ref('login')
 const forgetStep = ref(1)
 const countdown = ref(0)
 let countdownTimer = null
+
+// 按钮加载态：点击后禁用，直到请求完成
+const loginLoading = ref(false)
+const registerLoading = ref(false)
+const registerCodeLoading = ref(false)
+const forgetCodeLoading = ref(false)
+const changePasswordLoading = ref(false)
 
 // 表单数据
 const loginForm = reactive({
@@ -181,6 +196,7 @@ async function sendRegisterCode() {
     return
   }
 
+  registerCodeLoading.value = true
   try {
     // 发送验证码请求
     const response = await fetch('https://muqingxi.com:2345/proxy/sendCode', {
@@ -202,6 +218,8 @@ async function sendRegisterCode() {
   } catch (error) {
     console.error('发送验证码错误:', error)
     ElMessage.error('发送验证码过程中发生错误')
+  } finally {
+    registerCodeLoading.value = false
   }
 }
 
@@ -222,6 +240,7 @@ async function sendVerificationCode() {
     return
   }
 
+  forgetCodeLoading.value = true
   try {
     // 发送请求到后端发送验证码
     const response = await fetch('https://muqingxi.com:2345/proxy/forgetPassword', {
@@ -246,6 +265,8 @@ async function sendVerificationCode() {
   } catch (error) {
     console.error('发送验证码错误:', error)
     ElMessage.error('发送验证码过程中发生错误')
+  } finally {
+    forgetCodeLoading.value = false
   }
 }
 
@@ -271,6 +292,7 @@ async function changePassword() {
     return
   }
 
+  changePasswordLoading.value = true
   try {
     // 发送请求到后端修改密码
     const response = await fetch('https://muqingxi.com:2345/proxy/changePassword', {
@@ -299,6 +321,8 @@ async function changePassword() {
   } catch (error) {
     console.error('重置密码错误:', error)
     ElMessage.error('重置密码过程中发生错误')
+  } finally {
+    changePasswordLoading.value = false
   }
 }
 
@@ -312,17 +336,22 @@ async function handleLogin() {
     return
   }
 
-  // 使用 useAuth 中的登录方法
-  const result = await authLogin(email, password, { redirect: !props.noRedirect })
+  loginLoading.value = true
+  try {
+    // 使用 useAuth 中的登录方法
+    const result = await authLogin(email, password, { redirect: !props.noRedirect })
 
-  // 注意：不需要手动处理跳转和成功消息，useAuth 已经处理了
-  if (result.success) {
-    if (props.noRedirect) {
-      emit('loginSuccess')
+    // 注意：不需要手动处理跳转和成功消息，useAuth 已经处理了
+    if (result.success) {
+      if (props.noRedirect) {
+        emit('loginSuccess')
+      }
+    } else {
+      // 错误消息已经在 useAuth 中处理
+      return
     }
-  } else {
-    // 错误消息已经在 useAuth 中处理
-    return
+  } finally {
+    loginLoading.value = false
   }
 }
 
@@ -355,6 +384,7 @@ async function handleRegister() {
     return
   }
 
+  registerLoading.value = true
   try {
     // 发送注册请求
     const response = await fetch('https://muqingxi.com:2345/proxy/register', {
@@ -383,6 +413,8 @@ async function handleRegister() {
   } catch (error) {
     console.error('注册错误:', error)
     ElMessage.error('注册过程中发生错误')
+  } finally {
+    registerLoading.value = false
   }
 }
 
@@ -497,6 +529,20 @@ function startCountdown() {
 
 .btna:active {
   transform: translateY(0);
+}
+
+.btna:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+.btna:disabled:hover {
+  background: #ccc;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 链接样式 */

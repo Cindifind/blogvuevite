@@ -7,7 +7,7 @@
 <script setup>
 import { inject } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import Login from '../components/Login.vue'
+import Login from '../components/pages/Login.vue'
 
 // 🔧 使用 useAuth() composable
 const { isLoggedIn, userInfo, login, logout } = useAuth()

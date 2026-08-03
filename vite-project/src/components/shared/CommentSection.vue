@@ -175,9 +175,9 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useAuth } from '../composables/useAuth'
+import { useAuth } from '../../composables/useAuth'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchWithToken } from '../utils/api'
+import { fetchWithToken } from '../../utils/api'
 
 // Props
 const props = defineProps({

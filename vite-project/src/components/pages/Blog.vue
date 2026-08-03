@@ -1,11 +1,11 @@
 <script setup>
 import {ref, reactive, onMounted, computed, watch, nextTick} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {useAuth} from '../composables/useAuth'
+import {useAuth} from '../../composables/useAuth'
 import {marked} from 'marked'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import CommentSection from './CommentSection.vue'
-import {authFetch} from '../utils/api'
+import CommentSection from '../shared/CommentSection.vue'
+import {authFetch} from '../../utils/api'
 
 // 路由相关
 const route = useRoute()

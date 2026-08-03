@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import Blog from '../components/Blog.vue'
+import Blog from '../components/pages/Blog.vue'
 </script>
 
 <style scoped>
