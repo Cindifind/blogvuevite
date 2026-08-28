@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+    <title>🎮 服务器状态 · muqingxi.com</title>
+    <!-- 默认 favicon (会被动态替换) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%237cb94b'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⛏%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font 清新字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Google Font 像素字体 (Minecraft 风格标题) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Minecraft 主题色: 草方块绿 / 钻石青 */
+            --mc-grass: #7cb94b;
+            --mc-grass-dark: #5a8f38;
+            --mc-grass-light: #e7f6db;
+            --mc-cyan: #2bc9b4;
+        }
+
+        html {
+            /* 占位背景: 明亮清新的天空→草方块渐变, 图片加载完成前显示 */
+            background: linear-gradient(160deg, #aee4ff 0%, #d9f3e0 50%, #a3d97e 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.8rem;
+            position: relative;
+        }
+
+        /* 背景图图层: 由 JS 随机选择 1-945 的图片, 加载完成后淡入 */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: var(--bg-image, none);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 1s ease;
+            will-change: opacity;
+        }
+
+        body.bg-loaded::before {
+            opacity: 1;
+        }
+
+        /* 遮罩层: 明亮清新的浅色渐变, 保留图片质感并保证卡片可读性 */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.30) 45%, rgba(255, 255, 255, 0.55) 100%);
+            backdrop-filter: blur(3px) saturate(1.2);
+            -webkit-backdrop-filter: blur(3px) saturate(1.2);
+        }
+
+        .glass-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 920px;
+            background: rgba(255, 255, 255, 0.70);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-radius: 56px;
+            padding: 2.2rem 2.2rem 1.8rem;
+            box-shadow: 0 30px 60px rgba(0, 20, 40, 0.10), 0 8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+            animation: cardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* 卡片顶部像素渐变条: 草方块绿 → 钻石青 (Minecraft 元素) */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 2.2rem;
+            right: 2.2rem;
+            height: 6px;
+            border-radius: 6px;
+            background: repeating-linear-gradient(90deg,
+                    #7cb94b 0 18px, #a5d478 18px 24px,
+                    #2bc9b4 24px 42px, #7ee0d2 42px 48px);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem 1.5rem;
+            margin-bottom: 1.8rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .header-left i {
+            font-size: 2.2rem;
+            color: var(--mc-grass);
+            filter: drop-shadow(0 4px 8px rgba(124, 185, 75, 0.25));
+        }
+
+        .header-left h1 {
+            font-family: 'Press Start 2P', 'Inter', sans-serif;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            letter-spacing: 0.03em;
+            color: #4c8a2f;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        /* favicon 显示区域 (位于标题旁) */
+        .favicon-container {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.3rem;
+        }
+        .favicon-container img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            image-rendering: pixelated;
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 0.45rem 1.4rem 0.45rem 1rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px; /* 像素方块, 更贴合 Minecraft 风格 */
+            display: inline-block;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+            transition: background 0.25s, box-shadow 0.25s;
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1a2f44;
+            letter-spacing: 0.2px;
+        }
+
+        .ping-box {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 0.25rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e3b5c;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .ping-box i {
+            color: var(--mc-cyan);
+        }
+
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.2rem 1.8rem;
+            margin: 1.6rem 0 1.4rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            padding: 0.9rem 1.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 8px rgba(0, 20, 40, 0.02);
+            transition: all 0.12s;
+        }
+
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(124, 185, 75, 0.45);
+            box-shadow: 0 8px 20px rgba(124, 185, 75, 0.08);
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--mc-grass-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-value {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #0b1f33;
+            letter-spacing: -0.01em;
+        }
+
+        .info-value small {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: #7ba06a;
+            margin-left: 0.3rem;
+        }
+
+        .motd-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.8rem 1.5rem;
+            margin: 0.8rem 0 0.4rem;
+        }
+
+        .motd-label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--mc-grass-dark);
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .motd-box {
+            background: rgba(231, 246, 219, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 60px;
+            padding: 0.35rem 1.8rem;
+            font-family: 'Inter', monospace;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #2c4a1c;
+            border: 1px solid rgba(124, 185, 75, 0.35);
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
+            word-break: break-all;
+        }
+
+        .players-section {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(6px);
+            border-radius: 32px;
+            padding: 1.2rem 1.6rem;
+            margin-top: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .players-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.3rem 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .players-header h3 {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #0f2a44;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .players-header h3 i {
+            color: var(--mc-grass);
+            font-size: 1rem;
+        }
+
+        .online-count {
+            background: rgba(124, 185, 75, 0.12);
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--mc-grass-dark);
+            border: 1px solid rgba(124, 185, 75, 0.3);
+        }
+
+        .player-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 0.7rem;
+            min-height: 2.4rem;
+        }
+
+        .player-tag {
+            background: rgba(231, 246, 219, 0.75);
+            backdrop-filter: blur(4px);
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #3e7a24; /* Minecraft 玩家名草绿色 */
+            border: 1px solid rgba(124, 185, 75, 0.35);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+            transition: all 0.1s;
+        }
+
+        .player-tag:hover {
+            background: white;
+            border-color: var(--mc-grass);
+            box-shadow: 0 4px 12px rgba(124, 185, 75, 0.15);
+        }
+
+        .empty-players {
+            color: #7ba06a;
+            font-weight: 400;
+            font-size: 0.95rem;
+            padding: 0.2rem 0;
+            opacity: 0.7;
+        }
+
+        .footer {
+            margin-top: 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem 1.5rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+            color: #6b8f52;
+            font-size: 0.85rem;
+        }
+
+        .refresh-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .refresh-info i {
+            color: var(--mc-grass);
+            opacity: 0.7;
+        }
+
+        .timer-badge {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 0.15rem 1.2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: #0f2a44;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-refresh {
+            /* Minecraft 经典石板按钮: 灰色渐变 + 深色边框 + 按下下沉 */
+            background: linear-gradient(180deg, #a8a8a8 0%, #8b8b8b 45%, #7a7a7a 100%);
+            border: 2px solid #3a3a3a;
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 0.55rem 1.6rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+            box-shadow:
+                inset -2px -4px 0 rgba(0, 0, 0, 0.22),
+                inset 2px 2px 0 rgba(255, 255, 255, 0.30),
+                0 4px 10px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-refresh:hover {
+            background: linear-gradient(180deg, #b3b3b3 0%, #949494 45%, #828282 100%);
+            border-color: #2b2b2b;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-refresh:active {
+            transform: translateY(2px);
+            box-shadow:
+                inset 2px 4px 0 rgba(0, 0, 0, 0.30),
+                inset -2px -2px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-refresh i {
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 700px) {
+            .glass-card { padding: 1.6rem 1.2rem; border-radius: 40px; }
+            .glass-card::before { left: 1.2rem; right: 1.2rem; }
+            .server-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+            .header { flex-direction: column; align-items: stretch; }
+            .status-badge { align-self: flex-start; }
+            .header-left h1 { font-size: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 1rem; }
+            /* 移动端 fixed attachment 兼容性差, 退化为滚动 */
+            body::before { background-attachment: scroll; }
+            body::after { backdrop-filter: none; -webkit-backdrop-filter: none; }
+            .glass-card { padding: 1.2rem 1rem; border-radius: 32px; }
+            .header-left h1 { font-size: 0.85rem; }
+            .player-tag { font-size: 0.8rem; padding: 0.1rem 0.9rem; }
+            .motd-box { font-size: 0.8rem; padding: 0.2rem 1.2rem; }
+            .footer { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glass-card" id="app">
+    <!-- 头部 -->
+    <div class="header">
+        <div class="header-left">
+            <i class="fas fa-cube"></i>
+            <h1 id="serverTitle">muqingxi.com</h1>
+            <!-- favicon 将动态渲染到这里 -->
+            <span class="favicon-container" id="faviconContainer">
+        <img id="serverFavicon" src="" alt="favicon" style="display:none; width:32px; height:32px; border-radius:6px; image-rendering:pixelated;">
+      </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot" id="statusDot" style="background: #f5a623; box-shadow: 0 0 0 2px rgba(255,255,255,0.5);"></span>
+                <span class="status-text" id="statusText">载入中…</span>
+            </div>
+            <div class="ping-box" id="pingBox">
+                <i class="fas fa-bolt"></i> <span id="pingDisplay">—</span><span style="font-weight:400; margin-left:2px;">ms</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 信息网格 -->
+    <div class="server-grid">
+        <div class="info-item">
+            <div class="info-label"><i class="fas fa-tag"></i> 版本</div>
+            <div class="info-value" id="versionDisplay">1.7.10 <small>protocol 5</small></div>
+        </div>
+        <div class="info-item">
+            <div class="info-label"><i class="fas fa-user-astronaut"></i> 在线 / 最大</div>
+            <div class="info-value" id="playerCountDisplay">— / —</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label"><i class="fas fa-clock"></i> 最后更新</div>
+            <div class="info-value" id="lastUpdateDisplay" style="font-size:1rem; font-weight:500;">—</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label"><i class="fas fa-server"></i> 地址</div>
+            <div class="info-value" id="addressDisplay" style="font-size:1rem; font-weight:500;">muqingxi.com</div>
+        </div>
+    </div>
+
+    <!-- MOTD -->
+    <div class="motd-wrapper">
+        <span class="motd-label"><i class="fas fa-scroll"></i> MOTD</span>
+        <span class="motd-box" id="motdDisplay">GT:New Horizons 2.9.0-beta-1</span>
+    </div>
+
+    <!-- 玩家列表 -->
+    <div class="players-section">
+        <div class="players-header">
+            <h3><i class="fas fa-users"></i> 玩家列表</h3>
+            <span class="online-count" id="onlineCountLabel">0 在线</span>
+        </div>
+        <div class="player-list" id="playerListContainer">
+            <span class="empty-players"><i class="fas fa-spinner fa-pulse"></i> 加载中…</span>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <div class="footer">
+        <div class="refresh-info">
+            <i class="fas fa-sync-alt fa-fw"></i>
+            <span>每30秒轮询</span>
+            <span class="timer-badge" id="countdownBadge">30s</span>
+        </div>
+        <button class="btn-refresh" id="manualRefreshBtn">
+            <i class="fas fa-rotate-right"></i> 立即刷新
+        </button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ---------- 随机背景图: 每次打开页面从 1-945 随机选一张, 加载完成后淡入 ----------
+        function applyRandomBackground() {
+            let attempts = 0;
+            const maxAttempts = 5; // 部分编号可能不存在(404), 失败时换一张重试
+            const tryLoad = () => {
+                if (attempts >= maxAttempts) {
+                    document.body.classList.add('bg-loaded');
+                    return;
+                }
+                attempts += 1;
+                const bgNum = Math.floor(Math.random() * 945) + 1;
+                const bgUrl = `https://www.muqingxi.com/image/${bgNum}.webp`;
+                const img = new Image();
+                img.onload = () => {
+                    document.body.style.setProperty('--bg-image', `url('${bgUrl}')`);
+                    document.body.classList.add('bg-loaded');
+                };
+                img.onerror = tryLoad;
+                img.src = bgUrl;
+            };
+            tryLoad();
+        }
+        applyRandomBackground();
+
+        // ---------- 默认查询 muqingxi.com (带端口) ----------
+        const DEFAULT_ADDRESS = 'muqingxi.com:25565';  // 默认 Minecraft 端口, 实际可能不同, 但作为展示
+        // 但根据用户要求 "默认查询muqingxi.com 的服务器", 我们使用 muqingxi.com 不带端口?
+        // 但代理需要 address 参数, 我们使用 muqingxi.com:25565 (常见端口)
+        // 也可以使用 muqingxi.com 但代理可能无法识别, 使用常见端口
+        // 根据之前数据 frp-ten.com:62963, 所以 muqingxi.com 可能也有端口, 我们使用 muqingxi.com:25565 作为默认
+        // 同时也支持 URL 参数 ?address=xxxx
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        let targetAddress = getQueryParam('address') || DEFAULT_ADDRESS;
+
+        // 代理地址
+        const PROXY_BASE = 'https://muqingxi.com:2345/proxy/server';
+        const API_URL = `${PROXY_BASE}?address=${encodeURIComponent(targetAddress)}`;
+
+        const POLL_INTERVAL = 30;
+        const COUNTDOWN_INTERVAL = 1000;
+
+        // DOM
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const versionDisplay = document.getElementById('versionDisplay');
+        const playerCountDisplay = document.getElementById('playerCountDisplay');
+        const pingDisplay = document.getElementById('pingDisplay');
+        const lastUpdateDisplay = document.getElementById('lastUpdateDisplay');
+        const motdDisplay = document.getElementById('motdDisplay');
+        const playerListContainer = document.getElementById('playerListContainer');
+        const onlineCountLabel = document.getElementById('onlineCountLabel');
+        const countdownBadge = document.getElementById('countdownBadge');
+        const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+        const addressDisplay = document.getElementById('addressDisplay');
+        const serverTitle = document.getElementById('serverTitle');
+        const serverFavicon = document.getElementById('serverFavicon');
+        const faviconContainer = document.getElementById('faviconContainer');
+
+        // 更新标题/地址
+        const hostName = targetAddress.split(':')[0] || 'muqingxi.com';
+        addressDisplay.textContent = targetAddress;
+        serverTitle.textContent = hostName;
+
+        let countdown = POLL_INTERVAL;
+        let countdownTimer = null;
+        let pollTimer = null;
+        let isManualRefreshing = false;
+
+        function formatTime(ts) {
+            if (!ts) return '—';
+            const d = new Date(ts);
+            return d.toLocaleTimeString('zh-CN', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+        }
+
+        function setStatusOnline(online, color, description) {
+            if (online === true) {
+                statusDot.style.background = color || '#44dd88';
+                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
+                statusText.textContent = description || '在线';
+            } else if (online === false) {
+                statusDot.style.background = '#ff6b6b';
+                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
+                statusText.textContent = description || '离线';
+            } else {
+                statusDot.style.background = '#f5a623';
+                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
+                statusText.textContent = description || '未知';
+            }
+        }
+
+        function renderPlayers(playersArray) {
+            if (!playersArray || playersArray.length === 0) {
+                playerListContainer.innerHTML = `<span class="empty-players"><i class="fas fa-user-slash"></i> 暂无玩家在线</span>`;
+                onlineCountLabel.textContent = '0 在线';
+                return;
+            }
+            const unique = [...new Set(playersArray)];
+            const html = unique.map(name =>
+                `<span class="player-tag"><i class="fas fa-user-circle" style="margin-right:5px; opacity:0.5;"></i>${escapeHtml(name)}</span>`
+            ).join('');
+            playerListContainer.innerHTML = html;
+            onlineCountLabel.textContent = `${unique.length} 在线`;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 更新 favicon (base64)
+        function updateFavicon(base64Data, format) {
+            if (!base64Data) {
+                serverFavicon.style.display = 'none';
+                // 恢复默认 favicon (link rel="icon")
+                const defaultFavicon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%237cb94b'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⛏%3C/text%3E%3C/svg%3E";
+                document.querySelector('link[rel="icon"]').href = defaultFavicon;
+                return;
+            }
+            // 如果 base64 包含 data:image 前缀, 直接使用, 否则构造
+            let imgSrc = base64Data;
+            if (!base64Data.startsWith('data:image')) {
+                const fmt = (format || 'PNG').toLowerCase();
+                imgSrc = `data:image/${fmt};base64,${base64Data}`;
+            }
+            // 显示在标题旁
+            serverFavicon.src = imgSrc;
+            serverFavicon.style.display = 'inline-block';
+            // 同时更新页面 favicon (link)
+            const link = document.querySelector('link[rel="icon"]');
+            if (link) {
+                link.href = imgSrc;
+            } else {
+                const newLink = document.createElement('link');
+                newLink.rel = 'icon';
+                newLink.href = imgSrc;
+                document.head.appendChild(newLink);
+            }
+        }
+
+        async function fetchServerStatus() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    signal: AbortSignal.timeout(8000)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                if (!data || typeof data !== 'object') throw new Error('无效响应');
+
+                const success = data.success === true;
+                const statusCode = data.status?.code || 'UNKNOWN';
+                const isOnline = (statusCode === 'ONLINE');
+                const color = data.status?.color || '#44dd88';
+                const description = data.status?.description || (isOnline ? '在线' : '离线');
+
+                const versionName = data.version?.name || '1.7.10';
+                const protocol = data.version?.protocol ?? 5;
+                versionDisplay.innerHTML = `${escapeHtml(versionName)} <small>protocol ${protocol}</small>`;
+
+                const players = data.players?.list || data.players?.sample?.map(p => p.name) || [];
+                const onlineCount = data.players?.online ?? players.length;
+                const maxPlayers = data.players?.max ?? 20;
+                playerCountDisplay.textContent = `${onlineCount} / ${maxPlayers}`;
+
+                const ping = data.ping?.latency ?? data.ping ?? null;
+                if (ping !== null && ping !== undefined) {
+                    pingDisplay.textContent = Math.round(ping);
+                } else {
+                    pingDisplay.textContent = '—';
+                }
+
+                const motdRaw = data.motd?.raw || data.motd || 'GT:New Horizons 2.9.0-beta-1';
+                motdDisplay.textContent = motdRaw;
+
+                setStatusOnline(isOnline, color, description);
+                renderPlayers(players);
+
+                const queryTime = data.queryTime || Date.now();
+                lastUpdateDisplay.textContent = formatTime(queryTime);
+
+                // 处理 favicon (从数据中提取)
+                if (data.favicon && data.favicon.base64) {
+                    updateFavicon(data.favicon.base64, data.favicon.format);
+                } else {
+                    // 如果没有favicon, 显示默认
+                    updateFavicon(null);
+                }
+
+                if (success) {
+                    countdown = POLL_INTERVAL;
+                    updateCountdownDisplay();
+                }
+
+                return data;
+
+            } catch (error) {
+                console.warn('获取失败:', error);
+                setStatusOnline(false, '#ff6b6b', '连接失败');
+                versionDisplay.innerHTML = '— <small>error</small>';
+                playerCountDisplay.textContent = '? / ?';
+                pingDisplay.textContent = '—';
+                motdDisplay.textContent = '⚠️ 获取失败';
+                renderPlayers([]);
+                lastUpdateDisplay.textContent = formatTime(Date.now());
+                // 失败时重置favicon
+                updateFavicon(null);
+                return null;
+            }
+        }
+
+        function updateCountdownDisplay() {
+            countdownBadge.textContent = `${countdown}s`;
+        }
+
+        function startCountdown() {
+            if (countdownTimer) clearInterval(countdownTimer);
+            countdownTimer = setInterval(() => {
+                if (countdown > 0) {
+                    countdown -= 1;
+                    updateCountdownDisplay();
+                } else {
+                    if (!isManualRefreshing) {
+                        fetchServerStatus().catch(() => {});
+                    }
+                    countdown = POLL_INTERVAL;
+                    updateCountdownDisplay();
+                }
+            }, COUNTDOWN_INTERVAL);
+        }
+
+        function startPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(() => {
+                if (!isManualRefreshing) {
+                    fetchServerStatus().catch(() => {});
+                }
+                countdown = POLL_INTERVAL;
+                updateCountdownDisplay();
+            }, POLL_INTERVAL * 1000);
+        }
+
+        async function manualRefresh() {
+            if (isManualRefreshing) return;
+            isManualRefreshing = true;
+            manualRefreshBtn.disabled = true;
+            manualRefreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 刷新中…';
+
+            try {
+                await fetchServerStatus();
+                countdown = POLL_INTERVAL;
+                updateCountdownDisplay();
+            } catch (e) {}
+
+            isManualRefreshing = false;
+            manualRefreshBtn.disabled = false;
+            manualRefreshBtn.innerHTML = '<i class="fas fa-rotate-right"></i> 立即刷新';
+        }
+
+        async function init() {
+            await fetchServerStatus();
+            countdown = POLL_INTERVAL;
+            updateCountdownDisplay();
+            startPolling();
+            startCountdown();
+            manualRefreshBtn.addEventListener('click', manualRefresh);
+        }
+
+        init().catch(e => console.warn('init error:', e));
+
+    })();
+</script>
+</body>
+</html>

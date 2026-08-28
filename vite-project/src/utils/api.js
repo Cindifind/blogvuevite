@@ -51,8 +51,14 @@ async function tryRefreshAndRetry(makeRequest) {
     return makeRequest()
   }
 
-  // 刷新失败，跳转登录
-  setTimeout(() => { window.location.href = '/login' }, 500)
+  // 刷新失败，派发可取消的登录失效事件：
+  // 页面可监听 'auth:expired' 并调用 e.preventDefault() 接管处理
+  // （如音乐页原地显示登录覆盖层，不跳转），默认行为是跳转登录页
+  const expiredEvent = new CustomEvent('auth:expired', { cancelable: true })
+  const shouldRedirect = window.dispatchEvent(expiredEvent)
+  if (shouldRedirect) {
+    setTimeout(() => { window.location.href = '/login' }, 500)
+  }
   throw new Error('登录已过期，请重新登录')
 }
 

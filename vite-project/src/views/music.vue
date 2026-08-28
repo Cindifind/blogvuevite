@@ -12,11 +12,21 @@
 </template>
 
 <script setup>
+import { onMounted, onBeforeUnmount } from 'vue'
 import MusicTool from '../components/pages/MusicTool.vue'
 import Login from '../components/pages/Login.vue'
 import { useAuth } from '../composables/useAuth'
 
 const { isLoggedIn } = useAuth()
+
+// token 刷新失败时（authFetch 派发 'auth:expired'），阻止跳转登录页，
+// 改用本页的 Login 覆盖层原地登录（token 清除后 isLoggedIn 变为 false 自动显示）
+const onAuthExpired = (e) => {
+  e.preventDefault()
+}
+
+onMounted(() => window.addEventListener('auth:expired', onAuthExpired))
+onBeforeUnmount(() => window.removeEventListener('auth:expired', onAuthExpired))
 </script>
 
 <style scoped>

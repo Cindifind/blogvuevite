@@ -190,6 +190,9 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    // 进行中的刷新任务（防止并发刷新时重复请求或误判失败）
+    let refreshPromise = null
+
     // 刷新 accessToken
     async function refreshAccessToken() {
         const currentRefreshToken = localStorage.getItem('refreshToken')
@@ -198,12 +201,23 @@ export const useUserStore = defineStore('user', () => {
             return { success: false, error: '无刷新令牌' }
         }
 
-        // 防止并发刷新
-        if (isRefreshing.value) {
-            console.log('正在刷新 token，跳过重复请求')
-            return { success: false, error: '正在刷新中' }
+        // 已有刷新在进行中：复用同一个 Promise，等待其完成，
+        // 避免并发请求把"正在刷新"误判为"刷新失败"
+        if (refreshPromise) {
+            console.log('正在刷新 token，等待现有刷新完成')
+            return refreshPromise
         }
 
+        refreshPromise = doRefreshAccessToken(currentRefreshToken)
+        try {
+            return await refreshPromise
+        } finally {
+            refreshPromise = null
+        }
+    }
+
+    // 实际执行刷新请求
+    async function doRefreshAccessToken(currentRefreshToken) {
         isRefreshing.value = true
         try {
             const response = await fetch('https://muqingxi.com:2345/proxy/refresh', {
