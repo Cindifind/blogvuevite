@@ -216,20 +216,34 @@ function normalizeServer(item) {
   return { serverId, serverInfo, playerStats }
 }
 
-// 解析 selectAllMCServe 的 serverAddress 字段（JSON 字符串 / 数组兼容）
+// 清洗地址列表：去除首尾空白与残留引号，过滤空串及 '[]' 这类脏元素
+function cleanAddressList(list) {
+  return list
+    .map(v => String(v).trim().replace(/^["']+|["']+$/g, '').trim())
+    .filter(v => v && !/^\[\s*\]$/.test(v))
+}
+
+// 解析 selectAllMCServe 的 serverAddress 字段，兼容三类格式：
+// 1) JSON 数组字符串     '["a","b"]' / '[]'
+// 2) Java List.toString  '[a, b]'（元素不带引号，JSON.parse 会失败，直接按逗号切分会把方括号带进地址里）
+// 3) 普通分隔字符串       'a,b' / 'a\nb'
 function parseAddresses(raw) {
-  if (Array.isArray(raw)) return raw.map(String).filter(Boolean)
-  if (typeof raw === 'string' && raw.trim()) {
+  if (Array.isArray(raw)) return cleanAddressList(raw)
+  if (typeof raw !== 'string') return []
+  let text = raw.trim()
+  if (!text) return []
+
+  if (text.startsWith('[')) {
+    // 先按严格 JSON 解析；失败说明是 Java List.toString 风格，剥掉最外层方括号再切分
     try {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean)
-      if (typeof parsed === 'string' && parsed.trim()) return [parsed]
+      const parsed = JSON.parse(text)
+      if (Array.isArray(parsed)) return cleanAddressList(parsed)
     } catch {
-      // 非 JSON 字符串时按逗号/换行切分兜底
-      return raw.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+      if (text.endsWith(']')) text = text.slice(1, -1)
     }
   }
-  return []
+
+  return cleanAddressList(text.split(/[,\n]/))
 }
 
 // ================= 展示数据 =================
