@@ -61,6 +61,12 @@ const routes = [
         name: 'SeoManagement',
         component: () => import('../views/seo-management.vue'),
         meta: { requiresAuth: true }
+    },
+    // 服务器状态页面路由（不在侧边栏展示，通过玩具箱链接访问，支持 ?email= 参数）
+    {
+        path: '/serverinfo',
+        name: 'ServerInfo',
+        component: () => import('../views/serverinfo.vue')
     }
     // 图片管理页面路由
     // // 留言页面路由

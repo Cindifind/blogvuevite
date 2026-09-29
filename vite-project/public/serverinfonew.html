@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>🎮 服务器状态 · muqingxi.com</title>
-    <!-- 默认 favicon (会被动态替换) -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%237cb94b'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⛏%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+    <title>服务器状态中心 · muqingxi.com</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230b1220'/%3E%3Cpath d='M30 68 L42 32 L58 58 L70 38' stroke='%2322d3ee' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Google Font 清新字体 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <!-- Google Font 像素字体 (Minecraft 风格标题) -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -20,896 +16,1063 @@
         }
 
         :root {
-            /* Minecraft 主题色: 草方块绿 / 钻石青 */
-            --mc-grass: #7cb94b;
-            --mc-grass-dark: #5a8f38;
-            --mc-grass-light: #e7f6db;
-            --mc-cyan: #2bc9b4;
+            --bg: #070b14;
+            --panel: rgba(148, 163, 184, 0.055);
+            --panel-2: rgba(148, 163, 184, 0.09);
+            --border: rgba(148, 163, 184, 0.16);
+            --border-soft: rgba(148, 163, 184, 0.10);
+            --text: #e6edf7;
+            --dim: #8b9bb4;
+            --accent: #22d3ee;
+            --accent-2: #818cf8;
+            --green: #34d399;
+            --red: #fb7185;
+            --amber: #fbbf24;
+            --radius: 20px;
         }
 
         html {
-            /* 占位背景: 明亮清新的天空→草方块渐变, 图片加载完成前显示 */
-            background: linear-gradient(160deg, #aee4ff 0%, #d9f3e0 50%, #a3d97e 100%);
+            background: var(--bg);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            color: var(--text);
             min-height: 100vh;
+            background:
+                    radial-gradient(820px 420px at 12% -6%, rgba(34, 211, 238, 0.13), transparent 60%),
+                    radial-gradient(900px 520px at 92% -4%, rgba(99, 102, 241, 0.16), transparent 58%),
+                    radial-gradient(720px 520px at 50% 112%, rgba(52, 211, 153, 0.09), transparent 62%),
+                    linear-gradient(180deg, #070b14 0%, #0a1020 55%, #070b14 100%);
+            background-attachment: fixed;
+        }
+
+        .page {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 30px 20px 64px;
+        }
+
+        /* ---------- 顶部栏 ---------- */
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px 24px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .brand {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 1.8rem;
-            position: relative;
+            gap: 14px;
         }
 
-        /* 背景图图层: 由 JS 随机选择 1-945 的图片, 加载完成后淡入 */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background-image: var(--bg-image, none);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-            opacity: 0;
-            transition: opacity 1s ease;
-            will-change: opacity;
+        .brand-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-size: 1.3rem;
+            color: #04121a;
+            background: linear-gradient(135deg, #22d3ee 0%, #60a5fa 55%, #818cf8 100%);
+            box-shadow: 0 10px 26px rgba(34, 211, 238, 0.28);
+            flex-shrink: 0;
         }
 
-        body.bg-loaded::before {
-            opacity: 1;
+        .brand h1 {
+            font-size: 1.32rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            background: linear-gradient(90deg, #f0f9ff 0%, #a5f3fc 45%, #c7d2fe 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* 遮罩层: 明亮清新的浅色渐变, 保留图片质感并保证卡片可读性 */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.30) 45%, rgba(255, 255, 255, 0.55) 100%);
-            backdrop-filter: blur(3px) saturate(1.2);
-            -webkit-backdrop-filter: blur(3px) saturate(1.2);
+        .brand p {
+            margin-top: 3px;
+            color: var(--dim);
+            font-size: 0.72rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
         }
 
-        .glass-card {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 920px;
-            background: rgba(255, 255, 255, 0.70);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border-radius: 56px;
-            padding: 2.2rem 2.2rem 1.8rem;
-            box-shadow: 0 30px 60px rgba(0, 20, 40, 0.10), 0 8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255,255,255,0.7);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.2s;
-            animation: cardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+        /* ---------- 搜索框 ---------- */
+        .search {
+            flex: 1 1 380px;
+            max-width: 560px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 6px 6px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(8, 13, 24, 0.82);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        /* 卡片顶部像素渐变条: 草方块绿 → 钻石青 (Minecraft 元素) */
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 2.2rem;
-            right: 2.2rem;
-            height: 6px;
-            border-radius: 6px;
-            background: repeating-linear-gradient(90deg,
-            #7cb94b 0 18px, #a5d478 18px 24px,
-            #2bc9b4 24px 42px, #7ee0d2 42px 48px);
+        .search:focus-within {
+            border-color: rgba(34, 211, 238, 0.65);
+            box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+        }
+
+        .search > i {
+            color: var(--dim);
+            font-size: 0.9rem;
+        }
+
+        .search input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--text);
+            font: inherit;
+            font-size: 0.92rem;
+        }
+
+        .search input::placeholder {
+            color: #5b6b84;
+        }
+
+        .search button {
+            flex-shrink: 0;
+            padding: 10px 24px;
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #04121a;
+            background: linear-gradient(135deg, #22d3ee, #60a5fa);
+            transition: filter 0.15s, transform 0.1s;
+        }
+
+        .search button:hover {
+            filter: brightness(1.12);
+        }
+
+        .search button:active {
+            transform: scale(0.97);
+        }
+
+        /* ---------- 信息条 ---------- */
+        .rail {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px 16px;
+            margin-bottom: 18px;
+            padding: 11px 18px;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            background: rgba(148, 163, 184, 0.03);
+            color: var(--dim);
+            font-size: 0.84rem;
+        }
+
+        .rail b {
+            color: #a5f3fc;
+            font-weight: 600;
+        }
+
+        .rail .hint i {
+            color: var(--accent);
+            margin-right: 7px;
+        }
+
+        .rail-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .countdown {
+            padding: 4px 13px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            color: var(--text);
+            font-size: 0.79rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 17px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            color: var(--text);
+            font: inherit;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+
+        .btn:hover:not(:disabled) {
+            border-color: rgba(34, 211, 238, 0.5);
+            color: #a5f3fc;
+            background: rgba(34, 211, 238, 0.07);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .btn.mini {
+            padding: 5px 13px;
+            font-size: 0.78rem;
+        }
+
+        /* ---------- 服务器卡片网格 ---------- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+            gap: 18px;
+            align-items: start;
+        }
+
+        .grid > .empty {
+            grid-column: 1 / -1;
+        }
+
+        .srv-card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 18px 18px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: linear-gradient(160deg, rgba(148, 163, 184, 0.09) 0%, rgba(148, 163, 184, 0.03) 58%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .srv-card.enter {
+            animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         @keyframes cardIn {
             from {
                 opacity: 0;
-                transform: translateY(24px) scale(0.98);
+                transform: translateY(12px) scale(0.99);
             }
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: none;
             }
         }
 
-        .header {
+        .srv-card.flash {
+            animation: flash 1.15s ease;
+        }
+
+        @keyframes flash {
+            0%, 100% {
+                border-color: var(--border);
+                box-shadow: none;
+            }
+            30%, 70% {
+                border-color: rgba(34, 211, 238, 0.85);
+                box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.16);
+            }
+        }
+
+        .srv-head {
             display: flex;
-            flex-wrap: wrap;
+            align-items: flex-start;
             justify-content: space-between;
-            align-items: center;
-            gap: 0.8rem 1.5rem;
-            margin-bottom: 1.8rem;
-            padding-bottom: 1.2rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .header-left {
+        .srv-id {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            gap: 12px;
+            min-width: 0;
         }
 
-        .header-left i {
-            font-size: 2.2rem;
-            color: var(--mc-grass);
-            filter: drop-shadow(0 4px 8px rgba(124, 185, 75, 0.25));
+        .srv-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #a5f3fc;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.22), rgba(99, 102, 241, 0.3));
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            overflow: hidden;
         }
 
-        .header-left h1 {
-            font-family: 'Press Start 2P', 'Inter', sans-serif;
-            font-size: 1.2rem;
-            line-height: 1.8;
-            letter-spacing: 0.03em;
-            color: #4c8a2f;
-            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.7);
+        .srv-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: pixelated;
         }
 
-        /* favicon 显示区域 (位于标题旁) */
-        .favicon-container {
+        .srv-names {
+            min-width: 0;
+        }
+
+        .srv-names h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            word-break: break-all;
+            line-height: 1.35;
+        }
+
+        .srv-sub {
+            display: inline-block;
+            margin-top: 2px;
+            color: var(--dim);
+            font-size: 0.72rem;
+            letter-spacing: 0.07em;
+        }
+
+        .srv-state {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge {
             display: inline-flex;
             align-items: center;
-            margin-left: 0.3rem;
-        }
-        .favicon-container img {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            image-rendering: pixelated;
-            background: rgba(255,255,255,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 0.45rem 1.4rem 0.45rem 1rem;
-            border-radius: 60px;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-
-        .status-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px; /* 像素方块, 更贴合 Minecraft 风格 */
-            display: inline-block;
-            box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
-            transition: background 0.25s, box-shadow 0.25s;
-        }
-
-        .status-text {
+            gap: 7px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--dim);
+            font-size: 0.76rem;
             font-weight: 600;
-            font-size: 0.95rem;
-            color: #1a2f44;
-            letter-spacing: 0.2px;
-        }
-
-        .ping-box {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            padding: 0.25rem 1.2rem;
-            border-radius: 60px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #1e3b5c;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             white-space: nowrap;
         }
 
-        .ping-box i {
-            color: var(--mc-cyan);
+        .badge i {
+            font-size: 0.72rem;
+            opacity: 0.85;
         }
 
-        .server-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.2rem 1.8rem;
-            margin: 1.6rem 0 1.4rem;
+        .badge.online {
+            color: #6ee7b7;
+            border-color: rgba(52, 211, 153, 0.35);
+            background: rgba(52, 211, 153, 0.08);
         }
 
-        .info-item {
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(4px);
-            border-radius: 28px;
-            padding: 0.9rem 1.4rem;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 2px 8px rgba(0, 20, 40, 0.02);
-            transition: all 0.12s;
+        .badge.offline {
+            color: #fda4af;
+            border-color: rgba(251, 113, 133, 0.35);
+            background: rgba(251, 113, 133, 0.08);
         }
 
-        .info-item:hover {
-            background: rgba(255, 255, 255, 0.75);
-            border-color: rgba(124, 185, 75, 0.45);
-            box-shadow: 0 8px 20px rgba(124, 185, 75, 0.08);
+        .badge.unknown {
+            color: #fcd34d;
+            border-color: rgba(251, 191, 36, 0.3);
+            background: rgba(251, 191, 36, 0.08);
         }
 
-        .info-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--mc-grass-dark);
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            margin-bottom: 0.2rem;
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
         }
 
-        .info-value {
-            font-weight: 600;
-            font-size: 1.2rem;
-            color: #0b1f33;
-            letter-spacing: -0.01em;
+        .badge.online .dot {
+            animation: pulse 1.8s ease-out infinite;
         }
 
-        .info-value small {
-            font-weight: 400;
-            font-size: 0.75rem;
-            color: #7ba06a;
-            margin-left: 0.3rem;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+            70% { box-shadow: 0 0 0 9px rgba(52, 211, 153, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
         }
 
-        .motd-wrapper {
+        /* ---------- 卡片内容 ---------- */
+        .srv-info {
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 0.8rem 1.5rem;
-            margin: 0.8rem 0 0.4rem;
+            gap: 8px 18px;
+            font-size: 0.82rem;
+            color: var(--dim);
         }
 
-        .motd-label {
-            font-weight: 500;
-            font-size: 0.85rem;
-            color: var(--mc-grass-dark);
-            letter-spacing: 0.3px;
-            display: flex;
+        .srv-info span {
+            display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 7px;
+            min-width: 0;
         }
 
-        .motd-box {
-            background: rgba(231, 246, 219, 0.6);
-            backdrop-filter: blur(4px);
-            border-radius: 60px;
-            padding: 0.35rem 1.8rem;
-            font-family: 'Inter', monospace;
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: #2c4a1c;
-            border: 1px solid rgba(124, 185, 75, 0.35);
-            box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
+        .srv-info i {
+            color: var(--accent);
+            opacity: 0.8;
+        }
+
+        .srv-info .motd-text {
+            color: #b7c5da;
             word-break: break-all;
         }
 
-        .players-section {
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(6px);
-            border-radius: 32px;
-            padding: 1.2rem 1.6rem;
-            margin-top: 1.2rem;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+        /* 玩家详细统计 */
+        .p-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
         }
 
-        .players-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
-            gap: 0.3rem 1rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .players-header h3 {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #0f2a44;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .players-header h3 i {
-            color: var(--mc-grass);
-            font-size: 1rem;
-        }
-
-        .online-count {
-            background: rgba(124, 185, 75, 0.12);
-            padding: 0.2rem 1.2rem;
-            border-radius: 60px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--mc-grass-dark);
-            border: 1px solid rgba(124, 185, 75, 0.3);
-        }
-
-        .player-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem 0.7rem;
-            min-height: 2.4rem;
-        }
-
-        .player-tag {
-            background: rgba(231, 246, 219, 0.75);
-            backdrop-filter: blur(4px);
-            padding: 0.2rem 1.2rem;
-            border-radius: 60px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #3e7a24;
-            border: 1px solid rgba(124, 185, 75, 0.35);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-            transition: all 0.1s;
-        }
-
-        .player-tag:hover {
-            background: white;
-            border-color: var(--mc-grass);
-            box-shadow: 0 4px 12px rgba(124, 185, 75, 0.15);
-        }
-
-        .player-stats-list {
+        .p-card {
             display: flex;
             flex-direction: column;
-            gap: 0.65rem;
-            width: 100%;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--border-soft);
+            border-radius: 14px;
+            background: rgba(7, 11, 20, 0.45);
         }
 
-        .player-stat-card {
-            background: rgba(231, 246, 219, 0.55);
-            border: 1px solid rgba(124, 185, 75, 0.3);
-            border-radius: 18px;
-            padding: 0.75rem 1rem;
-            color: #2f5d1c;
+        .p-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .player-stat-card strong {
-            display: block;
-            font-size: 1rem;
-            margin-bottom: 0.35rem;
+        .p-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #eaf6ff;
+            background: linear-gradient(135deg,
+                hsl(var(--h, 200) 72% 44% / 0.9),
+                hsl(var(--h, 200) 72% 28% / 0.95));
+            border: 1px solid hsl(var(--h, 200) 72% 60% / 0.35);
         }
 
-        .player-stat-card .meta {
+        .p-top strong {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .p-ping {
+            flex-shrink: 0;
+            color: var(--dim);
+            font-size: 0.77rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .p-ping i {
+            color: var(--accent-2);
+            margin-right: 4px;
+            opacity: 0.85;
+        }
+
+        .p-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.35rem 0.9rem;
-            font-size: 0.82rem;
+            gap: 7px 15px;
+            color: #b7c5da;
+            font-size: 0.79rem;
+        }
+
+        .p-meta i {
+            color: var(--accent-2);
+            margin-right: 6px;
             opacity: 0.9;
         }
 
-        .empty-players {
-            color: #7ba06a;
-            font-weight: 400;
-            font-size: 0.95rem;
-            padding: 0.2rem 0;
-            opacity: 0.7;
-        }
-
-        .footer {
-            margin-top: 1.8rem;
+        /* 玩家名字胶囊 (简易模式) */
+        .chips {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.8rem 1.5rem;
-            padding-top: 1.2rem;
-            border-top: 1px solid rgba(0, 0, 0, 0.04);
-            color: #6b8f52;
-            font-size: 0.85rem;
+            gap: 8px;
         }
 
-        .refresh-info {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-        }
-
-        .refresh-info i {
-            color: var(--mc-grass);
-            opacity: 0.7;
-        }
-
-        .timer-badge {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(4px);
-            padding: 0.15rem 1.2rem;
-            border-radius: 60px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            color: #0f2a44;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-refresh {
-            /* Minecraft 经典石板按钮: 灰色渐变 + 深色边框 + 按下下沉 */
-            background: linear-gradient(180deg, #a8a8a8 0%, #8b8b8b 45%, #7a7a7a 100%);
-            border: 2px solid #3a3a3a;
-            border-radius: 4px;
-            color: #ffffff;
-            padding: 0.55rem 1.6rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
-            box-shadow:
-                    inset -2px -4px 0 rgba(0, 0, 0, 0.22),
-                    inset 2px 2px 0 rgba(255, 255, 255, 0.30),
-                    0 4px 10px rgba(0, 0, 0, 0.08);
-            cursor: pointer;
-            transition: all 0.15s;
+        .chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 211, 238, 0.22);
+            background: rgba(34, 211, 238, 0.07);
+            color: #a5f3fc;
+            font-size: 0.82rem;
+            font-weight: 500;
         }
 
-        .btn-refresh:hover {
-            background: linear-gradient(180deg, #b3b3b3 0%, #949494 45%, #828282 100%);
-            border-color: #2b2b2b;
-            color: #ffffff;
-            transform: translateY(-1px);
+        .chip i {
+            font-size: 0.72rem;
+            opacity: 0.6;
         }
 
-        .btn-refresh:active {
-            transform: translateY(2px);
-            box-shadow:
-                    inset 2px 4px 0 rgba(0, 0, 0, 0.30),
-                    inset -2px -2px 0 rgba(255, 255, 255, 0.08);
+        /* 空 / 错误状态块 */
+        .empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 16px 14px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: var(--dim);
+            font-size: 0.84rem;
+            text-align: center;
         }
 
-        .btn-refresh i {
-            font-size: 0.9rem;
+        .empty.error {
+            color: #fda4af;
+            border-color: rgba(251, 113, 133, 0.35);
+            background: rgba(251, 113, 133, 0.05);
         }
 
-        @media (max-width: 700px) {
-            .glass-card { padding: 1.6rem 1.2rem; border-radius: 40px; }
-            .glass-card::before { left: 1.2rem; right: 1.2rem; }
-            .server-grid { grid-template-columns: 1fr; gap: 0.8rem; }
-            .header { flex-direction: column; align-items: stretch; }
-            .status-badge { align-self: flex-start; }
-            .header-left h1 { font-size: 1rem; }
+        /* 卡片底部 */
+        .srv-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-soft);
+            color: var(--dim);
+            font-size: 0.78rem;
         }
 
-        @media (max-width: 480px) {
-            body { padding: 1rem; }
-            /* 移动端 fixed attachment 兼容性差, 退化为滚动 */
-            body::before { background-attachment: scroll; }
-            body::after { backdrop-filter: none; -webkit-backdrop-filter: none; }
-            .glass-card { padding: 1.2rem 1rem; border-radius: 32px; }
-            .header-left h1 { font-size: 0.85rem; }
-            .player-tag { font-size: 0.8rem; padding: 0.1rem 0.9rem; }
-            .motd-box { font-size: 0.8rem; padding: 0.2rem 1.2rem; }
-            .footer { flex-direction: column; align-items: flex-start; }
+        .srv-foot .ts i {
+            margin-right: 6px;
+            opacity: 0.7;
+        }
+
+        /* 页面页脚 */
+        .page-foot {
+            margin-top: 34px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-soft);
+            color: var(--dim);
+            font-size: 0.78rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 18px;
+            justify-content: space-between;
+        }
+
+        .page-foot i {
+            color: var(--accent);
+            margin-right: 6px;
+            opacity: 0.75;
+        }
+
+        @media (max-width: 720px) {
+            .page { padding: 22px 14px 48px; }
+            .topbar { flex-direction: column; align-items: stretch; }
+            .search { max-width: none; }
+            .grid { grid-template-columns: 1fr; }
+            .brand h1 { font-size: 1.15rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="glass-card" id="app">
-    <!-- 头部 -->
-    <div class="header">
-        <div class="header-left">
-            <i class="fas fa-cube"></i>
-            <h1 id="serverTitle">muqingxi.com</h1>
-            <!-- favicon 将动态渲染到这里 -->
-            <span class="favicon-container" id="faviconContainer">
-        <img id="serverFavicon" src="" alt="favicon" style="display:none; width:32px; height:32px; border-radius:6px; image-rendering:pixelated;">
-      </span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
-            <div class="status-badge" id="statusBadge">
-                <span class="status-dot" id="statusDot" style="background: #f5a623; box-shadow: 0 0 0 2px rgba(255,255,255,0.5);"></span>
-                <span class="status-text" id="statusText">载入中…</span>
-            </div>
-            <div class="ping-box" id="pingBox">
-                <i class="fas fa-bolt"></i> <span id="pingDisplay">—</span><span style="font-weight:400; margin-left:2px;">ms</span>
+<div class="page">
+    <!-- 顶部栏: 品牌 + 搜索框 -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-logo"><i class="fas fa-server"></i></div>
+            <div>
+                <h1>服务器状态中心</h1>
+                <p>Server Status Hub</p>
             </div>
         </div>
-    </div>
+        <form class="search" id="searchForm">
+            <i class="fas fa-search"></i>
+            <input id="searchInput" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="搜索服务器：ID（如 default）或地址（如 play.example.com:25565）">
+            <button type="submit"><i class="fas fa-magnifying-glass"></i> 搜索</button>
+        </form>
+    </header>
 
-    <!-- 信息网格 -->
-    <div class="server-grid">
-        <div class="info-item">
-            <div class="info-label"><i class="fas fa-tag"></i> 版本</div>
-            <div class="info-value" id="versionDisplay">1.7.10 <small>protocol 5</small></div>
-        </div>
-        <div class="info-item">
-            <div class="info-label"><i class="fas fa-user-astronaut"></i> 在线 / 最大</div>
-            <div class="info-value" id="playerCountDisplay">— / —</div>
-        </div>
-        <div class="info-item">
-            <div class="info-label"><i class="fas fa-clock"></i> 最后更新</div>
-            <div class="info-value" id="lastUpdateDisplay" style="font-size:1rem; font-weight:500;">—</div>
-        </div>
-        <div class="info-item">
-            <div class="info-label"><i class="fas fa-server"></i> 地址</div>
-            <div class="info-value" id="addressDisplay" style="font-size:1rem; font-weight:500;">muqingxi.com</div>
-        </div>
-    </div>
-
-    <!-- MOTD -->
-    <div class="motd-wrapper">
-        <span class="motd-label"><i class="fas fa-scroll"></i> MOTD</span>
-        <span class="motd-box" id="motdDisplay">GT:New Horizons 2.9.0-beta-1</span>
-    </div>
-
-    <!-- 玩家列表 / 详细统计（query 按需拉取） -->
-    <div class="players-section">
-        <div class="players-header">
-            <h3><i class="fas fa-users"></i> 玩家统计</h3>
-            <span class="online-count" id="onlineCountLabel">0 在线</span>
-        </div>
-        <div class="player-list" id="playerListContainer">
-            <span class="empty-players"><i class="fas fa-spinner fa-pulse"></i> 加载中…</span>
+    <!-- 信息条 -->
+    <div class="rail">
+        <span class="hint"><i class="fas fa-circle-info"></i>
+            支持详细统计的服务器：<b id="knownServers">获取中…</b>
+        </span>
+        <div class="rail-right">
+            <span class="countdown" id="countdown">30s</span>
+            <button class="btn" id="refreshBtn" type="button">
+                <i class="fas fa-rotate-right"></i> 立即刷新
+            </button>
         </div>
     </div>
 
-    <!-- 底部 -->
-    <div class="footer">
-        <div class="refresh-info">
-            <i class="fas fa-sync-alt fa-fw"></i>
-            <span>每30秒轮询</span>
-            <span class="timer-badge" id="countdownBadge">30s</span>
-        </div>
-        <button class="btn-refresh" id="manualRefreshBtn">
-            <i class="fas fa-rotate-right"></i> 立即刷新
-        </button>
-    </div>
+    <!-- 服务器卡片网格 -->
+    <main class="grid" id="serverGrid"></main>
+
+    <!-- 页脚 -->
+    <footer class="page-foot">
+        <span><i class="fas fa-database"></i>数据来源 muqingxi.com:2345</span>
+        <span><i class="fas fa-clock"></i>列表内服务器展示详细统计，列表外服务器仅展示玩家名字</span>
+    </footer>
 </div>
 
 <script>
-    (function() {
+    (function () {
         "use strict";
 
-        // ---------- 随机背景图: 每次打开页面从 1-945 随机选一张, 加载完成后淡入 ----------
-        function applyRandomBackground() {
-            let attempts = 0;
-            const maxAttempts = 5; // 部分编号可能不存在(404), 失败时换一张重试
-            const tryLoad = () => {
-                if (attempts >= maxAttempts) {
-                    document.body.classList.add('bg-loaded');
-                    return;
-                }
-                attempts += 1;
-                const bgNum = Math.floor(Math.random() * 945) + 1;
-                const bgUrl = `https://www.muqingxi.com/image/${bgNum}.webp`;
-                const img = new Image();
-                img.onload = () => {
-                    document.body.style.setProperty('--bg-image', `url('${bgUrl}')`);
-                    document.body.classList.add('bg-loaded');
-                };
-                img.onerror = tryLoad;
-                img.src = bgUrl;
-            };
-            tryLoad();
-        }
-        applyRandomBackground();
+        // ================= 配置 =================
+        const API_BASE = 'https://muqingxi.com:2345/proxy';
+        const POLL_INTERVAL = 30;      // 轮询秒数
+        const REQUEST_TIMEOUT = 15000; // 单次请求超时
 
-        // ---------- 默认查询 muqingxi.com (带端口) ----------
-        const DEFAULT_ADDRESS = 'muqingxi.com:25565';  // 默认 Minecraft 端口, 实际可能不同, 但作为展示
-        // 但根据用户要求 "默认查询muqingxi.com 的服务器", 我们使用 muqingxi.com 不带端口?
-        // 但代理需要 address 参数, 我们使用 muqingxi.com:25565 (常见端口)
-        // 也可以使用 muqingxi.com 但代理可能无法识别, 使用常见端口
-        // 根据之前数据 frp-ten.com:62963, 所以 muqingxi.com 可能也有端口, 我们使用 muqingxi.com:25565 作为默认
-        // 同时也支持 URL 参数 ?address=xxxx
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        let targetAddress = getQueryParam('address') || DEFAULT_ADDRESS;
-
-        // 代理地址（服务器状态）
-        const PROXY_BASE = 'https://muqingxi.com:2345/proxy/server';
-        const API_URL = `${PROXY_BASE}?address=${encodeURIComponent(targetAddress)}`;
-
-        // 玩家统计：经 2345 cline 反代 → Spring StatsHttpGateway(:8790) → TCP → MinecraftChat
-        // 公网: https://muqingxi.com:2345/proxy/playerstats
-        // cline: @Client(name=playerstats) → http://82.156.62.5:8790/api/playerstats
-        // 可用 ?statsApi= 与 ?serverId= 覆盖
-        const STATS_API = getQueryParam('statsApi') || 'https://muqingxi.com:2345/proxy/playerstats';
-        const STATS_SERVER_ID = getQueryParam('serverId') || 'default';
-
-        const POLL_INTERVAL = 30;
-        const COUNTDOWN_INTERVAL = 1000;
-
-        // DOM
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const versionDisplay = document.getElementById('versionDisplay');
-        const playerCountDisplay = document.getElementById('playerCountDisplay');
-        const pingDisplay = document.getElementById('pingDisplay');
-        const lastUpdateDisplay = document.getElementById('lastUpdateDisplay');
-        const motdDisplay = document.getElementById('motdDisplay');
-        const playerListContainer = document.getElementById('playerListContainer');
-        const onlineCountLabel = document.getElementById('onlineCountLabel');
-        const countdownBadge = document.getElementById('countdownBadge');
-        const manualRefreshBtn = document.getElementById('manualRefreshBtn');
-        const addressDisplay = document.getElementById('addressDisplay');
-        const serverTitle = document.getElementById('serverTitle');
-        const serverFavicon = document.getElementById('serverFavicon');
-        const faviconContainer = document.getElementById('faviconContainer');
-
-        // 更新标题/地址
-        const hostName = targetAddress.split(':')[0] || 'muqingxi.com';
-        addressDisplay.textContent = targetAddress;
-        serverTitle.textContent = hostName;
-
+        // ================= 状态 =================
+        const detailed = new Map(); // serverId(原样)     -> 记录 { id, data, error, loading, updatedAt }
+        const simple = new Map();   // address(小写归一) -> 记录 { address, data, error, loading, updatedAt }
+        const renderedKeys = new Set(); // 已渲染过的卡片 key, 仅给首次出现播放进场动画
+        let knownIds = [];          // serverlist 返回的服务器 ID 列表
+        let listError = null;       // serverlist 获取失败信息
         let countdown = POLL_INTERVAL;
-        let countdownTimer = null;
-        let pollTimer = null;
-        let isManualRefreshing = false;
+        let busy = false;
+
+        // ================= DOM =================
+        const els = {
+            grid: document.getElementById('serverGrid'),
+            searchForm: document.getElementById('searchForm'),
+            searchInput: document.getElementById('searchInput'),
+            knownServers: document.getElementById('knownServers'),
+            countdown: document.getElementById('countdown'),
+            refreshBtn: document.getElementById('refreshBtn'),
+        };
+
+        // ================= 工具函数 =================
+        function escapeHtml(text) {
+            return String(text ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[ch]));
+        }
 
         function formatTime(ts) {
             if (!ts) return '—';
             const d = new Date(ts);
-            return d.toLocaleTimeString('zh-CN', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const ss = String(d.getSeconds()).padStart(2, '0');
+            return `${hh}:${mm}:${ss}`;
         }
 
-        function setStatusOnline(online, color, description) {
-            if (online === true) {
-                statusDot.style.background = color || '#44dd88';
-                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
-                statusText.textContent = description || '在线';
-            } else if (online === false) {
-                statusDot.style.background = '#ff6b6b';
-                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
-                statusText.textContent = description || '离线';
-            } else {
-                statusDot.style.background = '#f5a623';
-                statusDot.style.boxShadow = `0 0 0 2px rgba(255,255,255,0.5)`;
-                statusText.textContent = description || '未知';
-            }
+        function hueOf(str) {
+            let h = 0;
+            for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) % 360;
+            return h;
         }
 
-        function renderPlayers(playersArray) {
-            if (!playersArray || playersArray.length === 0) {
-                playerListContainer.innerHTML = `<span class="empty-players"><i class="fas fa-user-slash"></i> 暂无玩家在线</span>`;
-                onlineCountLabel.textContent = '0 在线';
-                return;
-            }
-            const unique = [...new Set(playersArray)];
-            const html = unique.map(name =>
-                `<span class="player-tag"><i class="fas fa-user-circle" style="margin-right:5px; opacity:0.5;"></i>${escapeHtml(name)}</span>`
-            ).join('');
-            playerListContainer.innerHTML = html;
-            onlineCountLabel.textContent = `${unique.length} 在线`;
-        }
-
-        function renderPlayerStats(statsData) {
-            const players = statsData?.players || (statsData?.player ? [statsData.player] : []);
-            if (!players.length) {
-                playerListContainer.innerHTML = `<span class="empty-players"><i class="fas fa-user-slash"></i> 暂无详细统计（游戏服未连桥或无人在线）</span>`;
-                onlineCountLabel.textContent = '0 在线';
-                return false;
-            }
-            playerListContainer.innerHTML = `<div class="player-stats-list">${players.map(p => {
-                const pt = p.playTime?.display || '—';
-                const adv = p.advancements ? `${p.advancements.completed}/${p.advancements.total}` : '—';
-                const deaths = p.stats?.deaths ?? '—';
-                const kills = p.stats?.mobKills ?? '—';
-                const ping = p.live?.ping ?? '—';
-                const dim = (p.live?.dimension || '—').replace('minecraft:', '');
-                return `<article class="player-stat-card">
-                    <strong><i class="fas fa-user-circle"></i> ${escapeHtml(p.name)}</strong>
-                    <div class="meta">
-                        <span>⏱ ${escapeHtml(pt)}</span>
-                        <span>🏆 ${escapeHtml(String(adv))}</span>
-                        <span>💀 ${escapeHtml(String(deaths))} / ⚔ ${escapeHtml(String(kills))}</span>
-                        <span>📶 ${escapeHtml(String(ping))} ms</span>
-                        <span>🌍 ${escapeHtml(dim)}</span>
-                    </div>
-                </article>`;
-            }).join('')}</div>`;
-            onlineCountLabel.textContent = `${players.length} 在线 · 查询`;
-            return true;
-        }
-
-        async function fetchPlayerStats() {
-            const url = `${STATS_API}?serverId=${encodeURIComponent(STATS_SERVER_ID)}&t=${Date.now()}`;
-            const response = await fetch(url, {
+        async function getJSON(url) {
+            const res = await fetch(url, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
-                signal: AbortSignal.timeout(12000)
+                signal: AbortSignal.timeout(REQUEST_TIMEOUT),
             });
-            if (!response.ok) throw new Error(`stats HTTP ${response.status}`);
-            const data = await response.json();
-            if (data.success === false) throw new Error(data.message || 'stats query failed');
-            return data;
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        // ================= 数据获取 =================
+        // 1. 服务器目录: 返回 { servers: ['default'], count, type: 'server_list' }
+        async function syncServerList() {
+            const data = await getJSON(`${API_BASE}/serverlist`);
+            const ids = Array.isArray(data && data.servers)
+                ? data.servers.filter(v => typeof v === 'string' && v.trim())
+                : [];
+            knownIds = ids;
+            listError = null;
+            els.knownServers.textContent = ids.length ? ids.join(' · ') : '无';
+            // 移除已从目录中消失的服务器记录
+            [...detailed.keys()].forEach(k => {
+                if (!ids.some(id => id.toLowerCase() === k.toLowerCase())) detailed.delete(k);
+            });
         }
 
-        // 更新 favicon (base64)
-        function updateFavicon(base64Data, format) {
-            if (!base64Data) {
-                serverFavicon.style.display = 'none';
-                // 恢复默认 favicon (link rel="icon")
-                const defaultFavicon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%237cb94b'/%3E%3Ctext x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='Arial'%3E⛏%3C/text%3E%3C/svg%3E";
-                document.querySelector('link[rel="icon"]').href = defaultFavicon;
+        // 2. 目录内服务器: 用 serverId 查详细玩家统计 (游玩时长/成就/死亡等)
+        async function refreshDetailed(id) {
+            let rec = detailed.get(id);
+            if (!rec) {
+                rec = { id, data: null, error: null, loading: true, updatedAt: 0 };
+                detailed.set(id, rec);
+            }
+            rec.loading = true;
+            render();
+            try {
+                const data = await getJSON(`${API_BASE}/playerstats?serverId=${encodeURIComponent(id)}`);
+                if (data && data.success === false) throw new Error(data.message || '查询失败');
+                rec.data = data;
+                rec.error = null;
+            } catch (err) {
+                rec.error = (err && err.message) ? err.message : String(err);
+            }
+            rec.loading = false;
+            rec.updatedAt = Date.now();
+            render();
+        }
+
+        // 3. 目录外服务器: 用 address 查基础状态, 仅展示玩家名字
+        async function refreshSimple(address) {
+            const key = address.toLowerCase();
+            let rec = simple.get(key);
+            if (!rec) {
+                rec = { address, data: null, error: null, loading: true, updatedAt: 0 };
+                simple.set(key, rec);
+            }
+            rec.loading = true;
+            render();
+            try {
+                const data = await getJSON(`${API_BASE}/server?address=${encodeURIComponent(address)}`);
+                if (data && data.success === false) throw new Error(data.message || '查询失败');
+                rec.data = data;
+                rec.error = null;
+            } catch (err) {
+                rec.error = (err && err.message) ? err.message : String(err);
+            }
+            rec.loading = false;
+            rec.updatedAt = Date.now();
+            render();
+        }
+
+        // 刷新全部: 先同步目录, 再并行刷新全部卡片
+        async function refreshAll() {
+            if (busy) return;
+            busy = true;
+            els.refreshBtn.disabled = true;
+            try {
+                await syncServerList();
+            } catch (err) {
+                listError = (err && err.message) ? err.message : String(err);
+                els.knownServers.textContent = '获取失败';
+            }
+            const tasks = [];
+            knownIds.forEach(id => tasks.push(refreshDetailed(id)));
+            [...simple.values()].forEach(rec => tasks.push(refreshSimple(rec.address)));
+            await Promise.allSettled(tasks);
+            render();
+            busy = false;
+            els.refreshBtn.disabled = false;
+            countdown = POLL_INTERVAL;
+            updateCountdownUI();
+        }
+
+        // ================= 渲染 =================
+        function cardClass(key) {
+            let cls = 'srv-card';
+            if (!renderedKeys.has(key)) {
+                renderedKeys.add(key);
+                cls += ' enter';
+            }
+            return cls;
+        }
+
+        function render() {
+            const cards = [];
+            knownIds.forEach(id => {
+                const rec = detailed.get(id);
+                if (rec) cards.push(renderDetailedCard(rec));
+            });
+            [...simple.values()].forEach(rec => cards.push(renderSimpleCard(rec)));
+            if (!cards.length) cards.push(renderGridEmpty());
+            els.grid.innerHTML = cards.join('');
+        }
+
+        function renderGridEmpty() {
+            if (listError) {
+                return `<div class="empty error"><i class="fas fa-triangle-exclamation"></i>` +
+                    `服务器列表获取失败：${escapeHtml(listError)}（可用搜索框直接搜索服务器地址）</div>`;
+            }
+            return `<div class="empty"><i class="fas fa-spinner fa-pulse"></i>正在获取服务器列表…</div>`;
+        }
+
+        function renderPlayerStats(players) {
+            if (!players.length) {
+                return `<div class="empty"><i class="fas fa-user-slash"></i>暂无玩家在线</div>`;
+            }
+            const cards = players.map(p => {
+                const name = (p && p.name) ? String(p.name) : '未知玩家';
+                const pt = (p && p.playTime && p.playTime.display) || '—';
+                const adv = (p && p.advancements)
+                    ? `${p.advancements.completed ?? '—'} / ${p.advancements.total ?? '—'}`
+                    : '—';
+                const deaths = (p && p.stats && p.stats.deaths != null) ? p.stats.deaths : '—';
+                const kills = (p && p.stats && p.stats.mobKills != null) ? p.stats.mobKills : '—';
+                const ping = (p && p.live && p.live.ping != null) ? p.live.ping : '—';
+                const dim = String((p && p.live && p.live.dimension) || '—').replace('minecraft:', '');
+                const initial = escapeHtml(name.slice(0, 1).toUpperCase());
+                return `
+                <article class="p-card">
+                    <div class="p-top">
+                        <span class="p-avatar" style="--h:${hueOf(name)}">${initial}</span>
+                        <strong>${escapeHtml(name)}</strong>
+                        <span class="p-ping"><i class="fas fa-wifi"></i>${escapeHtml(String(ping))} ms</span>
+                    </div>
+                    <div class="p-meta">
+                        <span><i class="fas fa-hourglass-half"></i>${escapeHtml(String(pt))}</span>
+                        <span><i class="fas fa-trophy"></i>成就 ${escapeHtml(String(adv))}</span>
+                        <span><i class="fas fa-skull"></i>死亡 ${escapeHtml(String(deaths))}</span>
+                        <span><i class="fas fa-crosshairs"></i>击杀 ${escapeHtml(String(kills))}</span>
+                        <span><i class="fas fa-earth-asia"></i>${escapeHtml(String(dim))}</span>
+                    </div>
+                </article>`;
+            }).join('');
+            return `<div class="p-grid">${cards}</div>`;
+        }
+
+        // 目录内服务器卡片: 详细统计
+        function renderDetailedCard(rec) {
+            const key = `d:${rec.id}`;
+            const d = rec.data || {};
+            const players = Array.isArray(d.players) ? d.players : [];
+            const count = typeof d.count === 'number' ? d.count : players.length;
+            const max = typeof d.maxPlayers === 'number' ? d.maxPlayers : '—';
+
+            let state;
+            if (rec.loading && !rec.data) {
+                state = `<span class="badge unknown"><i class="fas fa-spinner fa-pulse"></i>查询中</span>`;
+            } else if (rec.error && !rec.data) {
+                state = `<span class="badge offline"><span class="dot"></span>查询失败</span>`;
+            } else if (d.online === true) {
+                state = `<span class="badge online"><span class="dot"></span>在线</span>`;
+            } else {
+                state = `<span class="badge offline"><span class="dot"></span>离线</span>`;
+            }
+
+            let body;
+            if (rec.loading && !rec.data) {
+                body = `<div class="empty"><i class="fas fa-spinner fa-pulse"></i>正在查询玩家统计…</div>`;
+            } else if (rec.error) {
+                body = `<div class="empty error"><i class="fas fa-circle-exclamation"></i>${escapeHtml(rec.error)}</div>`;
+            } else {
+                body = renderPlayerStats(players);
+            }
+
+            return `
+            <article class="${cardClass(key)}" data-key="${escapeHtml(key)}">
+                <header class="srv-head">
+                    <div class="srv-id">
+                        <div class="srv-logo">${escapeHtml(rec.id.slice(0, 1).toUpperCase())}</div>
+                        <div class="srv-names">
+                            <h2>${escapeHtml(rec.id)}</h2>
+                            <span class="srv-sub">详细统计 · 玩家数据</span>
+                        </div>
+                    </div>
+                    <div class="srv-state">
+                        ${state}
+                        <span class="badge"><i class="fas fa-users"></i>${escapeHtml(String(count))} / ${escapeHtml(String(max))}</span>
+                    </div>
+                </header>
+                <div class="srv-body">${body}</div>
+                <footer class="srv-foot">
+                    <span class="ts"><i class="fas fa-clock-rotate-left"></i>${rec.updatedAt ? '更新于 ' + formatTime(rec.updatedAt) : '尚未更新'}</span>
+                    <button class="btn mini" type="button" data-refresh="${escapeHtml(key)}">
+                        <i class="fas fa-rotate-right"></i>刷新
+                    </button>
+                </footer>
+            </article>`;
+        }
+
+        // 目录外服务器卡片: 基础状态 + 仅玩家名字
+        function renderSimpleCard(rec) {
+            const key = `s:${rec.address.toLowerCase()}`;
+            const d = rec.data || {};
+            const listNames = (d.players && Array.isArray(d.players.list) && d.players.list.length)
+                ? d.players.list
+                : ((d.players && Array.isArray(d.players.sample))
+                    ? d.players.sample.map(p => p && p.name).filter(Boolean)
+                    : []);
+            const onlineNum = (d.players && typeof d.players.online === 'number') ? d.players.online : listNames.length;
+            const maxNum = (d.players && typeof d.players.max === 'number') ? d.players.max : '—';
+            const isOnline = (d.status && d.status.code) === 'ONLINE';
+            const version = (d.version && d.version.name) ? d.version.name : '—';
+            const motd = (d.motd && (d.motd.clean || d.motd.raw)) || '—';
+            const ping = (d.ping && typeof d.ping.latency === 'number') ? Math.round(d.ping.latency) : null;
+            const favicon = (d.favicon && d.favicon.base64)
+                ? (String(d.favicon.base64).startsWith('data:image')
+                    ? d.favicon.base64
+                    : `data:image/${String(d.favicon.format || 'png').toLowerCase()};base64,${d.favicon.base64}`)
+                : null;
+
+            let state;
+            if (rec.loading && !rec.data) {
+                state = `<span class="badge unknown"><i class="fas fa-spinner fa-pulse"></i>查询中</span>`;
+            } else if (rec.error && !rec.data) {
+                state = `<span class="badge offline"><span class="dot"></span>查询失败</span>`;
+            } else if (isOnline) {
+                state = `<span class="badge online"><span class="dot"></span>在线</span>`;
+            } else {
+                state = `<span class="badge offline"><span class="dot"></span>离线</span>`;
+            }
+
+            const pingBadge = (ping !== null)
+                ? `<span class="badge"><i class="fas fa-bolt"></i>${ping} ms</span>`
+                : '';
+
+            let body;
+            if (rec.loading && !rec.data) {
+                body = `<div class="empty"><i class="fas fa-spinner fa-pulse"></i>正在查询…</div>`;
+            } else if (rec.error) {
+                body = `<div class="empty error"><i class="fas fa-circle-exclamation"></i>${escapeHtml(rec.error)}</div>`;
+            } else if (listNames.length) {
+                body = `<div class="chips">${listNames.map(name =>
+                    `<span class="chip"><i class="fas fa-user-circle"></i>${escapeHtml(String(name))}</span>`
+                ).join('')}</div>`;
+            } else {
+                body = `<div class="empty"><i class="fas fa-user-slash"></i>暂无玩家在线</div>`;
+            }
+
+            const logo = favicon
+                ? `<img src="${favicon}" alt="favicon">`
+                : escapeHtml(rec.address.slice(0, 1).toUpperCase());
+
+            return `
+            <article class="${cardClass(key)}" data-key="${escapeHtml(key)}">
+                <header class="srv-head">
+                    <div class="srv-id">
+                        <div class="srv-logo">${logo}</div>
+                        <div class="srv-names">
+                            <h2>${escapeHtml(rec.address)}</h2>
+                            <span class="srv-sub">简易查询 · 仅玩家名字</span>
+                        </div>
+                    </div>
+                    <div class="srv-state">
+                        ${state}
+                        <span class="badge"><i class="fas fa-users"></i>${escapeHtml(String(onlineNum))} / ${escapeHtml(String(maxNum))}</span>
+                        ${pingBadge}
+                    </div>
+                </header>
+                <div class="srv-info">
+                    <span><i class="fas fa-tag"></i>${escapeHtml(version)}</span>
+                    <span class="motd-text"><i class="fas fa-scroll"></i>${escapeHtml(motd)}</span>
+                </div>
+                <div class="srv-body">${body}</div>
+                <footer class="srv-foot">
+                    <span class="ts"><i class="fas fa-clock-rotate-left"></i>${rec.updatedAt ? '更新于 ' + formatTime(rec.updatedAt) : '尚未更新'}</span>
+                    <button class="btn mini" type="button" data-refresh="${escapeHtml(key)}">
+                        <i class="fas fa-rotate-right"></i>刷新
+                    </button>
+                </footer>
+            </article>`;
+        }
+
+        // ================= 交互 =================
+        function flash(key) {
+            const card = [...els.grid.querySelectorAll('[data-key]')]
+                .find(el => el.dataset.key === key);
+            if (!card) return;
+            card.classList.remove('flash');
+            void card.offsetWidth; // 重启动画
+            card.classList.add('flash');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function handleSearch(rawQuery) {
+            const query = String(rawQuery || '').trim();
+            if (!query) return;
+
+            // 1. 命中服务器目录中的 ID: 刷新其详细统计
+            const idMatch = knownIds.find(id => id.toLowerCase() === query.toLowerCase());
+            if (idMatch) {
+                await refreshDetailed(idMatch);
+                flash(`d:${idMatch}`);
                 return;
             }
-            // 如果 base64 包含 data:image 前缀, 直接使用, 否则构造
-            let imgSrc = base64Data;
-            if (!base64Data.startsWith('data:image')) {
-                const fmt = (format || 'PNG').toLowerCase();
-                imgSrc = `data:image/${fmt};base64,${base64Data}`;
+
+            // 2. 已存在的简易查询卡片: 直接刷新
+            const key = query.toLowerCase();
+            if (simple.has(key)) {
+                await refreshSimple(simple.get(key).address);
+                flash(`s:${key}`);
+                return;
             }
-            // 显示在标题旁
-            serverFavicon.src = imgSrc;
-            serverFavicon.style.display = 'inline-block';
-            // 同时更新页面 favicon (link)
-            const link = document.querySelector('link[rel="icon"]');
-            if (link) {
-                link.href = imgSrc;
+
+            // 3. 作为服务器地址查询 (目录外, 仅展示玩家名字)
+            await refreshSimple(query);
+            flash(`s:${key}`);
+        }
+
+        function updateCountdownUI() {
+            els.countdown.textContent = `${countdown}s`;
+        }
+
+        function tickCountdown() {
+            if (busy) return;
+            countdown -= 1;
+            if (countdown <= 0) {
+                countdown = POLL_INTERVAL;
+                refreshAll().catch(() => {});
+            }
+            updateCountdownUI();
+        }
+
+        // ================= 事件绑定 =================
+        els.searchForm.addEventListener('submit', e => {
+            e.preventDefault();
+            handleSearch(els.searchInput.value).catch(err => console.warn('搜索失败:', err));
+        });
+
+        els.refreshBtn.addEventListener('click', () => {
+            refreshAll().catch(() => {});
+        });
+
+        els.grid.addEventListener('click', e => {
+            const btn = e.target.closest('[data-refresh]');
+            if (!btn || btn.disabled) return;
+            const key = btn.dataset.refresh;
+            btn.disabled = true;
+            if (key.startsWith('d:')) {
+                refreshDetailed(key.slice(2)).catch(() => {});
             } else {
-                const newLink = document.createElement('link');
-                newLink.rel = 'icon';
-                newLink.href = imgSrc;
-                document.head.appendChild(newLink);
+                const rec = simple.get(key.slice(2));
+                refreshSimple(rec ? rec.address : key.slice(2)).catch(() => {});
             }
-        }
+        });
 
-        async function fetchServerStatus() {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' },
-                    signal: AbortSignal.timeout(8000)
-                });
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                if (!data || typeof data !== 'object') throw new Error('无效响应');
-
-                const success = data.success === true;
-                const statusCode = data.status?.code || 'UNKNOWN';
-                const isOnline = (statusCode === 'ONLINE');
-                const color = data.status?.color || '#44dd88';
-                const description = data.status?.description || (isOnline ? '在线' : '离线');
-
-                const versionName = data.version?.name || '1.7.10';
-                const protocol = data.version?.protocol ?? 5;
-                versionDisplay.innerHTML = `${escapeHtml(versionName)} <small>protocol ${protocol}</small>`;
-
-                const players = data.players?.list || data.players?.sample?.map(p => p.name) || [];
-                const onlineCount = data.players?.online ?? players.length;
-                const maxPlayers = data.players?.max ?? 20;
-                playerCountDisplay.textContent = `${onlineCount} / ${maxPlayers}`;
-
-                const ping = data.ping?.latency ?? data.ping ?? null;
-                if (ping !== null && ping !== undefined) {
-                    pingDisplay.textContent = Math.round(ping);
-                } else {
-                    pingDisplay.textContent = '—';
-                }
-
-                const motdRaw = data.motd?.raw || data.motd || 'GT:New Horizons 2.9.0-beta-1';
-                motdDisplay.textContent = motdRaw;
-
-                setStatusOnline(isOnline, color, description);
-
-                // 优先按需查询模组统计；失败则回退代理玩家名列表
-                try {
-                    const stats = await fetchPlayerStats();
-                    if (!renderPlayerStats(stats)) {
-                        renderPlayers(players);
-                    } else if (typeof stats.count === 'number') {
-                        playerCountDisplay.textContent = `${stats.count} / ${stats.maxPlayers ?? maxPlayers}`;
-                    }
-                } catch (statsErr) {
-                    console.warn('玩家统计查询失败，回退名单:', statsErr);
-                    renderPlayers(players);
-                }
-
-                const queryTime = data.queryTime || Date.now();
-                lastUpdateDisplay.textContent = formatTime(queryTime);
-
-                // 处理 favicon (从数据中提取)
-                if (data.favicon && data.favicon.base64) {
-                    updateFavicon(data.favicon.base64, data.favicon.format);
-                } else {
-                    // 如果没有favicon, 显示默认
-                    updateFavicon(null);
-                }
-
-                if (success) {
-                    countdown = POLL_INTERVAL;
-                    updateCountdownDisplay();
-                }
-
-                return data;
-
-            } catch (error) {
-                console.warn('获取失败:', error);
-                setStatusOnline(false, '#ff6b6b', '连接失败');
-                versionDisplay.innerHTML = '— <small>error</small>';
-                playerCountDisplay.textContent = '? / ?';
-                pingDisplay.textContent = '—';
-                motdDisplay.textContent = '⚠️ 获取失败';
-                renderPlayers([]);
-                lastUpdateDisplay.textContent = formatTime(Date.now());
-                // 失败时重置favicon
-                updateFavicon(null);
-                return null;
-            }
-        }
-
-        function updateCountdownDisplay() {
-            countdownBadge.textContent = `${countdown}s`;
-        }
-
-        function startCountdown() {
-            if (countdownTimer) clearInterval(countdownTimer);
-            countdownTimer = setInterval(() => {
-                if (countdown > 0) {
-                    countdown -= 1;
-                    updateCountdownDisplay();
-                } else {
-                    if (!isManualRefreshing) {
-                        fetchServerStatus().catch(() => {});
-                    }
-                    countdown = POLL_INTERVAL;
-                    updateCountdownDisplay();
-                }
-            }, COUNTDOWN_INTERVAL);
-        }
-
-        function startPolling() {
-            if (pollTimer) clearInterval(pollTimer);
-            pollTimer = setInterval(() => {
-                if (!isManualRefreshing) {
-                    fetchServerStatus().catch(() => {});
-                }
-                countdown = POLL_INTERVAL;
-                updateCountdownDisplay();
-            }, POLL_INTERVAL * 1000);
-        }
-
-        async function manualRefresh() {
-            if (isManualRefreshing) return;
-            isManualRefreshing = true;
-            manualRefreshBtn.disabled = true;
-            manualRefreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 刷新中…';
-
-            try {
-                await fetchServerStatus();
-                countdown = POLL_INTERVAL;
-                updateCountdownDisplay();
-            } catch (e) {}
-
-            isManualRefreshing = false;
-            manualRefreshBtn.disabled = false;
-            manualRefreshBtn.innerHTML = '<i class="fas fa-rotate-right"></i> 立即刷新';
-        }
-
+        // ================= 启动 =================
         async function init() {
-            await fetchServerStatus();
-            countdown = POLL_INTERVAL;
-            updateCountdownDisplay();
-            startPolling();
-            startCountdown();
-            manualRefreshBtn.addEventListener('click', manualRefresh);
+            render();
+            await refreshAll();
+            setInterval(tickCountdown, 1000);
         }
 
-        init().catch(e => console.warn('init error:', e));
-
+        init().catch(err => {
+            console.warn('init error:', err);
+            render();
+        });
     })();
 </script>
 </body>
 </html>
+            
