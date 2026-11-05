@@ -1,7 +1,7 @@
 <!-- index.vue -->
 <template>
   <div class="index-container">
-    <!-- 第一屏 - 背景轮播和统计信息 -->
+    <!-- 第一屏 - 背景轮播 + 功能入口动画 -->
     <StatsSection />
   </div>
   
@@ -20,5 +20,7 @@ const { isLoggedIn, userInfo, login, logout } = useAuth()
 .index-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 </style>
