@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div class="index-container">
-      <Live2D/>
+<!--      <Live2D/>-->
       <!-- 导航菜单 -->
       <Navigation
           :is-open="isNavigationOpen"
