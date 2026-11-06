@@ -10,7 +10,6 @@
       :max-speed="1.2"
       :near-radius="170"
       :lock-radius="85"
-      :seek-speed="9"
       :idle-opacity="0.3"
       :near-opacity="0.72"
       :normal-stagger="0.07"
@@ -29,7 +28,7 @@
             class="vpb-box hero-title"
             data-dir="up"
             data-growth-rate="4.4"
-            data-placeholder=""
+            data-placeholder=" "
             :data-text="heroTitle"
           >{{ heroTitle }}</h1>
 
@@ -38,7 +37,7 @@
             data-dir="down"
             data-growth-rate="5"
             data-big-text
-            data-placeholder=""
+            data-placeholder=" "
             :data-text="heroSubtitle"
           >{{ heroSubtitle }}</p>
 
@@ -48,7 +47,8 @@
         <!-- ── 站点数据：每一格都是一个独立的 vpb-box ── -->
         <section class="stat-board" aria-label="站点数据">
           <!-- 盒内文本必须保持稳定：数值只走 data-text，否则 Vue 重渲染会用
-               textContent 覆盖 PointerBoxes 运行时注入的 .vpb-inner -->
+               textContent 覆盖 PointerBoxes 运行时注入的 .vpb-inner。
+               官方包把空串 data-placeholder 回退成「·」，这里用空格保持拖拽期留白 -->
           <div
             v-for="stat in statTiles"
             :key="stat.key"
@@ -57,7 +57,7 @@
             data-dir="br"
             data-growth-rate="5.4"
             data-big-text
-            data-placeholder=""
+            data-placeholder=" "
             :data-text="stat.value"
             :aria-label="`${stat.label}：${stat.value}`"
           >{{ stat.label }}</div>
@@ -77,7 +77,7 @@
                 :class="`feature-title--${feature.key}`"
                 :data-dir="index % 2 === 1 ? 'left' : 'right'"
                 data-growth-rate="4.6"
-                data-placeholder=""
+                data-placeholder=" "
                 :data-text="feature.title"
               >{{ feature.title }}</h2>
 
@@ -86,7 +86,7 @@
                 :data-dir="index % 2 === 1 ? 'left' : 'right'"
                 data-growth-rate="5.2"
                 data-big-text
-                data-placeholder=""
+                data-placeholder=" "
                 :data-text="feature.desc"
               >{{ feature.desc }}</p>
             </div>
@@ -97,7 +97,7 @@
               :data-dir="index % 2 === 1 ? 'right' : 'left'"
               data-growth-rate="4.4"
               data-text=""
-              data-placeholder=""
+              data-placeholder=" "
               :to="feature.path"
               :aria-label="`进入${feature.title}`"
             >{{ feature.title }}</router-link>
@@ -109,7 +109,7 @@
           data-dir="up"
           data-growth-rate="5"
           data-big-text
-          data-placeholder=""
+          data-placeholder=" "
           :data-text="footerText"
         >{{ footerText }}</div>
       </div>
@@ -119,7 +119,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import PointerBoxes from '../../vue-pointer-boxes/PointerBoxes.vue'
+import PointerBoxes from 'vue-pointer-boxes'
 
 const pointerRef = ref(null)
 

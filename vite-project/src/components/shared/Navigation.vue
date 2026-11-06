@@ -298,7 +298,7 @@ const handleClose = () => {
   cursor: pointer;
   font-size: 12px;
   line-height: 1.6;
-  //align-self: center;
+  /* align-self: center; */
 }
 
 </style>

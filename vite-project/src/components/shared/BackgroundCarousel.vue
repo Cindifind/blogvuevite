@@ -234,4 +234,11 @@ onMounted(async () => {
 #current-layer {
   opacity: 1;
 }
+
+/* 博客页是长页面：仅博客页放开 #section1 的 100vh 裁剪，离开时由组件移除类名 */
+#section1.section1--blog {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
 </style>

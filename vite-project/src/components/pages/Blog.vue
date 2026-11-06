@@ -1,10 +1,11 @@
 <script setup>
-import {ref, reactive, onMounted, computed, watch, nextTick} from 'vue'
+import {ref, reactive, onMounted, onUnmounted, computed, watch, nextTick} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuth} from '../../composables/useAuth'
-import {marked} from 'marked'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import CommentSection from '../shared/CommentSection.vue'
+import PointerBoxes from 'vue-pointer-boxes'
+import {marked} from 'marked'
 import {authFetch} from '../../utils/api'
 
 // 路由相关
@@ -24,63 +25,27 @@ const loading = ref(false)
 const error = ref(null)
 const articles = ref([])
 const selectedArticle = ref(null)
-const markdownContent = ref('') // 存储Markdown内容
+const markdownSource = ref('') // 原始 Markdown，交给 PointerBoxes 的 markdown 模式渲染
+const markdownLoading = ref(false)
+const pointerRef = ref(null)
+let pageSection = null
 
-// 应用代码高亮（基于 Prism.js，与 music.html 保持一致）
-const applyCodeHighlighting = async () => {
+// PointerBoxes 只在扫描时接管 DOM：列表/详情切换、分页、正文加载后都要重新扫描
+const refreshPointerBoxes = async () => {
   await nextTick()
-  const Prism = window.Prism
-  if (Prism?.highlightAll) {
-    Prism.highlightAll()
-  }
+  pointerRef.value?.restart?.()
 }
 
-// 当 Markdown 内容或文章详情变化时，重新高亮代码块
-watch(markdownContent, () => {
-  applyCodeHighlighting()
-})
-watch(selectedArticle, () => {
-  applyCodeHighlighting()
-})
+// Markdown 渲染：把 marked 输出的围栏代码块升级成可拖拽的子 box。
+// 代码动辄上千字符，默认 12ms/字符要等几十秒；这里用 1.5ms/字符 + 较快的展开速度，
+// 既保留逐字感，又不至于让读者干等。
+const renderMarkdown = (source) => marked
+    .parse(source || '', {breaks: true, gfm: true})
+    .replace(
+        /<pre><code(?: class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g,
+        (_, lang, code) => `<pre class="vpb-box vpb-md-code" data-dir="br" data-radius="12" data-growth-rate="25" data-stagger="0.0015"${lang ? ` data-lang="${lang}"` : ''}>${code.replace(/\n$/, '')}</pre>`
+    )
 
-// 配置 marked 在解析阶段集成 Prism.js（适配 v16 API）
-try {
-  const Prism = typeof window !== 'undefined' ? window.Prism : null
-  const escapeHtml = (str) => String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-
-  // 使用 marked v16 的对象签名渲染器
-  const renderer = {
-    // code 接收对象参数：{ text, lang }
-    code({text, lang}) {
-      const language = (lang || '').trim().toLowerCase()
-      let codeHtml = escapeHtml(text)
-      if (Prism?.languages && Prism?.highlight && language) {
-        const grammar = Prism.languages[language]
-        if (grammar) {
-          try {
-            codeHtml = Prism.highlight(text, grammar, language)
-          } catch (_) { /* ignore */
-          }
-        }
-      }
-      const langClass = language ? `language-${language}` : ''
-      return `<pre><code class="${langClass}">${codeHtml}</code></pre>`
-    }
-  }
-
-  // 应用渲染器与高亮回调
-  marked.use({renderer})
-  marked.setOptions({
-    breaks: true,
-    gfm: true
-  })
-} catch (_) {
-}
 const currentPage = ref(0)
 const totalPages = ref(0)
 const pageSize = 10
@@ -120,7 +85,7 @@ const mdFileInput = ref(null)
 const uploadFileInput = ref(null)
 
 // 方法：加载文章列表
-const loadArticles = async (page = 0) => {
+const loadArticles = async (page = 0, {refresh = true} = {}) => {
   loading.value = true
   error.value = null
 
@@ -172,11 +137,12 @@ const loadArticles = async (page = 0) => {
     }
   } finally {
     loading.value = false
+    if (refresh) refreshPointerBoxes()
   }
 }
 
 // 方法：显示文章详情
-const showArticle = (article) => {
+const showArticle = async (article) => {
   selectedArticle.value = {
     ...article,
     // 确保内容格式化
@@ -184,22 +150,18 @@ const showArticle = (article) => {
   }
   // 更新URL
   router.push(`/blog/article/${article.timestamp}`)
-  // 获取并渲染Markdown内容
-  loadMarkdownContent(article.mdFile)
-  // 渲染完成后应用代码高亮
-  applyCodeHighlighting()
+  window.scrollTo({top: 0})
+  // 获取原始 Markdown，交给 PointerBoxes 的 markdown 模式渲染
+  await loadMarkdownContent(article.mdFile)
+  refreshPointerBoxes()
 }
-
-onMounted(() => {
-  applyCodeHighlighting()
-})
 
 // 方法：通过ID加载文章
 const loadArticleById = async (articleId) => {
   try {
-    // 如果文章列表为空，先加载文章列表
+    // 如果文章列表为空，先加载文章列表（暂不刷新动画，等详情就绪后统一扫描）
     if (articles.value.length === 0) {
-      await loadArticles(0)
+      await loadArticles(0, {refresh: false})
     }
 
     // 在文章列表中查找对应的文章
@@ -210,16 +172,20 @@ const loadArticleById = async (articleId) => {
         ...article,
         content: formatArticleContent(article.content)
       }
-      loadMarkdownContent(article.mdFile)
+      window.scrollTo({top: 0})
+      await loadMarkdownContent(article.mdFile)
+      refreshPointerBoxes()
     } else {
       // 如果在当前页面没找到，可能需要搜索所有页面
       ElMessage.error('文章不存在或已被删除')
       router.push('/blog')
+      refreshPointerBoxes()
     }
   } catch (error) {
     console.error('加载文章失败:', error)
     ElMessage.error('加载文章失败')
     router.push('/blog')
+    refreshPointerBoxes()
   }
 }
 
@@ -283,8 +249,11 @@ const formatArticleContent = (content) => {
 // 方法：返回文章列表
 const backToList = () => {
   selectedArticle.value = null
-  markdownContent.value = '' // 清空Markdown内容
+  markdownSource.value = ''
+  markdownLoading.value = false
   router.push('/blog') // 更新URL到博客列表页
+  window.scrollTo({top: 0})
+  refreshPointerBoxes()
 }
 
 // 方法：格式化日期
@@ -345,34 +314,26 @@ const getVisiblePages = () => {
   return pages;
 }
 
-// 方法：加载Markdown内容
+// 方法：加载Markdown内容（只保存原始文本，渲染交给 PointerBoxes）
 const loadMarkdownContent = async (filename) => {
-  console.log('尝试加载Markdown文件:', filename) // 添加调试日志
-
-  if (!filename) {
-    console.log('没有提供文件名，显示默认消息')
-    markdownContent.value = '<p class="no-content">暂无Markdown内容</p>'
-    return
-  }
+  markdownLoading.value = true
+  markdownSource.value = ''
 
   try {
-    const url = `https://muqingxi.com:2345/proxy/md?filename=${encodeURIComponent(filename)}`
-    console.log('发送请求到:', url) // 添加调试日志
+    if (!filename) return
 
+    const url = `https://muqingxi.com:2345/proxy/md?filename=${encodeURIComponent(filename)}`
     const response = await fetch(url)
 
     if (response.ok) {
-      const markdownText = await response.text()
-      console.log('成功获取Markdown内容:', markdownText.substring(0, 100) + '...') // 显示前100个字符
-      // 使用marked解析Markdown为HTML
-      markdownContent.value = marked(markdownText)
+      markdownSource.value = await response.text()
     } else {
       console.error('HTTP响应错误:', response.status, response.statusText)
-      markdownContent.value = '<p class="error-content">无法加载Markdown内容</p>'
     }
   } catch (err) {
     console.error('加载Markdown内容失败:', err)
-    markdownContent.value = '<p class="error-content">加载Markdown内容时发生错误</p>'
+  } finally {
+    markdownLoading.value = false
   }
 }
 
@@ -791,22 +752,35 @@ const cleanInvalidFiles = async () => {
 }
 // 生命周期：组件挂载时加载文章
 onMounted(() => {
-  loadArticles(0)
+  // 博客页内容高度不固定，放开 BackgroundCarousel 的 100vh 裁切
+  pageSection = document.getElementById('section1')
+  pageSection?.classList.add('section1--blog')
 
   // 检查是否有文章ID参数
   if (route.params.id) {
     loadArticleById(route.params.id)
+  } else {
+    loadArticles(0)
   }
+})
+
+onUnmounted(() => {
+  pageSection?.classList.remove('section1--blog')
 })
 
 // 监听路由变化
 watch(() => route.params.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
+    // showArticle 已经加载过同一篇文章时跳过，避免重复请求
+    if (selectedArticle.value?.timestamp?.toString() === newId.toString()) return
     loadArticleById(newId)
   } else if (!newId && oldId) {
     // 从文章详情页返回列表页
+    const hadArticle = !!selectedArticle.value
     selectedArticle.value = null
-    markdownContent.value = ''
+    markdownSource.value = ''
+    markdownLoading.value = false
+    if (hadArticle) refreshPointerBoxes()
   }
 })
 </script>
@@ -814,7 +788,31 @@ watch(() => route.params.id, (newId, oldId) => {
 <template>
   <div class="section">
     <div class="fp-tablecell">
-      <div class="journal">
+      <PointerBoxes
+          ref="pointerRef"
+          class="blog-anim"
+          :markdown="renderMarkdown"
+          :pointer-count="10"
+          :pointer-size="22"
+          :pointer-drag-size="34"
+          :min-speed="0.32"
+          :max-speed="1.15"
+          :near-radius="170"
+          :lock-radius="85"
+          :seek-speed="10"
+          :auto-reset-distance="100000"
+          :idle-opacity="0.24"
+          :near-opacity="0.7"
+          :normal-stagger="0.035"
+          :big-text-stagger="0.028"
+          :type-delay="360"
+          :rich-char-limit="1200"
+          :blur-char-limit="320"
+          :pointer-z-index="60"
+          :hide-native-cursor="false"
+          background="transparent"
+      >
+        <div class="journal">
         <div class="journal__shell">
 
           <!-- Loading -->
@@ -836,9 +834,31 @@ watch(() => route.params.id, (newId, oldId) => {
 
               <header class="journal__header">
                 <div class="journal__header-text">
-                  <span class="journal__eyebrow">Writing &amp; Notes</span>
-                  <h1 class="journal__title">博客</h1>
-                  <p class="journal__subtitle">记录思考、分享见闻</p>
+                  <span
+                      class="vpb-box journal__eyebrow"
+                      data-mode="html"
+                      data-height="auto"
+                      data-dir="right"
+                      data-growth-rate="6"
+                      data-placeholder=" "
+                  >Writing &amp; Notes</span>
+                  <h1
+                      class="vpb-box journal__title"
+                      data-mode="html"
+                      data-height="auto"
+                      data-dir="right"
+                      data-growth-rate="6"
+                      data-placeholder=" "
+                  >博客</h1>
+                  <p
+                      class="vpb-box journal__subtitle"
+                      data-mode="html"
+                      data-height="auto"
+                      data-radius="999"
+                      data-dir="right"
+                      data-growth-rate="6"
+                      data-placeholder=" "
+                  >记录思考、分享见闻</p>
                 </div>
               </header>
 
@@ -871,9 +891,15 @@ watch(() => route.params.id, (newId, oldId) => {
               <!-- Article grid -->
               <div v-else class="journal__grid">
                 <article
-                    v-for="article in articles"
+                    v-for="(article, index) in articles"
                     :key="article.timestamp"
-                    class="journal__card"
+                    class="vpb-box journal__card"
+                    data-mode="html"
+                    data-height="auto"
+                    :data-dir="index % 2 === 1 ? 'bl' : 'br'"
+                    data-growth-rate="5.5"
+                    data-stagger="0.018"
+                    data-placeholder=" "
                     @click="showArticle(article)"
                 >
                   <div class="journal__card-cover">
@@ -956,7 +982,7 @@ watch(() => route.params.id, (newId, oldId) => {
             </div>
 
             <!-- Detail view -->
-            <article v-else class="journal__detail">
+            <article v-else :key="selectedArticle.timestamp" class="journal__detail">
               <button type="button" class="journal__back" @click="backToList">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
@@ -969,12 +995,44 @@ watch(() => route.params.id, (newId, oldId) => {
                   <time>{{ formatDate(selectedArticle.timestamp) }}</time>
                   <span v-if="selectedArticle.labels" class="journal__detail-tag">{{ selectedArticle.labels }}</span>
                 </div>
-                <h1 class="journal__detail-title">{{ selectedArticle.title }}</h1>
+                <h1
+                    class="vpb-box journal__detail-title"
+                    data-mode="html"
+                    data-height="auto"
+                    data-dir="right"
+                    data-growth-rate="5"
+                    data-stagger="0.04"
+                    data-placeholder=" "
+                >{{ selectedArticle.title }}</h1>
               </header>
 
               <div class="journal__prose">
-                <div v-if="markdownContent" class="journal__markdown" v-html="markdownContent"></div>
-                <div v-else v-html="selectedArticle.content"></div>
+                <div v-if="markdownLoading" class="journal__prose-loading">
+                  <span class="journal__prose-dot" aria-hidden="true"></span>
+                  正在展开正文…
+                </div>
+                <div
+                    v-else-if="markdownSource"
+                    class="vpb-box journal__md"
+                    data-mode="markdown"
+                    data-height="520"
+                    data-dir="br"
+                    data-growth-rate="7"
+                    data-stagger="0.012"
+                    data-placeholder=" "
+                    :data-text="markdownSource"
+                ></div>
+                <div
+                    v-else
+                    class="vpb-box journal__md"
+                    data-mode="html"
+                    data-height="520"
+                    data-dir="br"
+                    data-growth-rate="7"
+                    data-stagger="0.012"
+                    data-placeholder=" "
+                    :data-html="selectedArticle.content"
+                ></div>
               </div>
 
               <div class="journal__detail-actions">
@@ -1092,7 +1150,8 @@ watch(() => route.params.id, (newId, oldId) => {
             </el-form>
           </el-dialog>
         </div>
-      </div>
+        </div>
+      </PointerBoxes>
     </div>
   </div>
 </template>
@@ -1147,18 +1206,6 @@ watch(() => route.params.id, (newId, oldId) => {
   border-radius: var(--j-radius-lg);
   box-shadow: unset;
   padding: clamp(24px, 5vw, 48px);
-  animation: journal-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes journal-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ── States ── */
@@ -1232,9 +1279,11 @@ watch(() => route.params.id, (newId, oldId) => {
 }
 
 .journal__subtitle {
+  width: 212px;
+  max-width: 100%;
+  margin: 6px 0 0;
   color: var(--j-text-muted);
   font-size: 1rem;
-  margin: 0;
 }
 
 /* ── Admin toolbar ── */
@@ -1887,6 +1936,264 @@ watch(() => route.params.id, (newId, oldId) => {
   .journal__card-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+</style>
+
+<style>
+/* ──────────────────────────────────────────────
+   PointerBoxes：.vpb-inner / .vpb-text 是运行时注入的节点，
+   scoped 命中不了，统一挂在 .blog-anim 命名空间下覆盖内置样式。
+   ────────────────────────────────────────────── */
+.blog-anim {
+  width: 100%;
+}
+
+/* ── 列表头部：小标签胶囊 + 标题玻璃板 ── */
+.blog-anim .vpb-box.journal__eyebrow .vpb-inner {
+  justify-content: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(12, 16, 24, .5);
+  border-color: rgba(255, 126, 219, .3);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--j-accent);
+}
+
+/* ── 副标题：深色玻璃胶囊 + 前置小圆点（与首页 hero-subtitle 同款） ── */
+.blog-anim .vpb-box.journal__subtitle .vpb-inner {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(10, 14, 20, .58);
+  border-color: rgba(255, 126, 219, .3);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--j-text-muted);
+}
+
+.blog-anim .vpb-box.journal__subtitle .vpb-inner::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--j-accent);
+  box-shadow: 0 0 10px rgba(255, 126, 219, .9);
+}
+
+.blog-anim .vpb-box.journal__subtitle .vpb-inner .vpb-text {
+  font-size: .95rem !important;
+  font-weight: 500;
+  line-height: 1.4 !important;
+  letter-spacing: .1em;
+  white-space: nowrap;
+  color: var(--j-text-muted);
+}
+
+.blog-anim .vpb-box.journal__subtitle.done .vpb-inner {
+  border-color: rgba(255, 126, 219, .5);
+  box-shadow: 0 10px 28px rgba(255, 126, 219, .14), 0 0 0 1px rgba(255, 126, 219, .16);
+  color: var(--j-text-muted);
+}
+
+.blog-anim .vpb-box.journal__title .vpb-inner,
+.blog-anim .vpb-box.journal__detail-title .vpb-inner {
+  display: block;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: rgba(12, 16, 24, .38);
+  border-color: rgba(255, 255, 255, .14);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .22);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--j-text);
+  transition: opacity .5s ease, background .5s ease, border-color .5s ease, box-shadow .5s ease;
+}
+
+.blog-anim .vpb-box.journal__title.done .vpb-inner,
+.blog-anim .vpb-box.journal__detail-title.done .vpb-inner {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--j-text);
+}
+
+/* ── 文章卡片：外观整体交给内层，外层只保留网格尺寸与点击 ── */
+.blog-anim .vpb-box.journal__card {
+  display: block;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.blog-anim .vpb-box.journal__card .vpb-inner {
+  display: block;
+  overflow: hidden;
+  background: var(--j-surface);
+  border: 1px solid var(--j-border);
+  border-radius: var(--j-radius);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .16);
+  color: var(--j-text);
+  transition: opacity .5s ease, background .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+
+.blog-anim .vpb-box.journal__card.done .vpb-inner {
+  background: var(--j-surface);
+  border-color: var(--j-border);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .24);
+  color: var(--j-text);
+}
+
+.blog-anim .vpb-box.journal__card:hover {
+  box-shadow: none;
+}
+
+.blog-anim .vpb-box.journal__card:hover .vpb-inner {
+  background: var(--j-surface-hover);
+  border-color: var(--j-border-strong);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .3);
+}
+
+/* 卡片内容容器：恢复块级排版，让封面 / 正文 / 底栏按原顺序铺满 */
+.blog-anim .vpb-box.journal__card .vpb-inner .vpb-text {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── 文章正文：先展示 520px，打完字后还原为全文 ── */
+.blog-anim .vpb-box.journal__md {
+  height: 520px;
+  margin: 0;
+}
+
+.blog-anim .vpb-box.journal__md .vpb-inner {
+  display: block;
+  padding: clamp(20px, 3vw, 30px) clamp(18px, 3.4vw, 36px);
+  border-radius: 18px;
+  background: rgba(10, 14, 22, .58);
+  border-color: rgba(255, 255, 255, .14);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, .3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, .9);
+  transition: opacity .5s ease, border-color .5s ease, box-shadow .5s ease;
+}
+
+.blog-anim .vpb-box.journal__md.done .vpb-inner {
+  border-color: rgba(255, 126, 219, .22);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, .26);
+  color: rgba(255, 255, 255, .9);
+}
+
+.blog-anim .journal__prose .vpb-md-body > :first-child {
+  margin-top: 0 !important;
+}
+
+.blog-anim .journal__prose .vpb-md-body > :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* 正文打完之后脱离 520px 的裁剪，恢复文档流占满全文 */
+.blog-anim .vpb-box.journal__md.done {
+  height: auto !important;
+}
+
+.blog-anim .vpb-box.journal__md.done > .vpb-inner {
+  position: relative !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+.blog-anim .vpb-box.journal__md.done > .vpb-inner .vpb-text {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* ── Markdown 围栏代码块：独立子 box ── */
+.blog-anim .journal__prose .vpb-box.vpb-md-code {
+  margin: 1.6em 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+
+.blog-anim .journal__prose .vpb-box.vpb-md-code .vpb-inner {
+  display: block;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .5);
+  border-color: rgba(255, 255, 255, .12);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .28);
+  color: rgba(255, 255, 255, .86);
+}
+
+.blog-anim .journal__prose .vpb-box.vpb-md-code.done {
+  height: auto !important;
+}
+
+.blog-anim .journal__prose .vpb-box.vpb-md-code.done > .vpb-inner {
+  position: relative !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  border-color: rgba(102, 204, 255, .28);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .24);
+  color: rgba(255, 255, 255, .86);
+}
+
+.blog-anim .journal__prose .vpb-box.vpb-md-code.done > .vpb-inner .vpb-text {
+  height: auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* ── 正文加载提示 ── */
+.blog-anim .journal__prose-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 4px;
+  color: var(--j-text-muted);
+  font-size: .95rem;
+}
+
+.blog-anim .journal__prose-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--j-accent);
+  box-shadow: 0 0 0 0 rgba(255, 126, 219, .45);
+  animation: journal-prose-pulse 1.1s ease-out infinite;
+}
+
+@keyframes journal-prose-pulse {
+  to {
+    box-shadow: 0 0 0 10px rgba(255, 126, 219, 0);
+  }
+}
+
+@media (max-width: 640px) {
+  .blog-anim .vpb-box.journal__title .vpb-inner,
+  .blog-anim .vpb-box.journal__detail-title .vpb-inner {
+    padding: 10px 14px;
+    border-radius: 14px;
+  }
+
+  .blog-anim .vpb-box.journal__md .vpb-inner {
+    padding: 18px 16px;
+    border-radius: 14px;
   }
 }
 </style>
