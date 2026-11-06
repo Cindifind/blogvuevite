@@ -38,5 +38,6 @@
 .env.test.local
 # 忽略 Edge CDP 调试用的用户数据目录
 edge-cdp-profile/
+README.md
 
 
